@@ -1,166 +1,477 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSG DOOR AND LAMINATION - Billing</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #333;
-      color: #fff;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h2 {
-      margin: 0;
-      font-size: 22px;
-      letter-spacing: 1px;
-    }
-    #logoUpload {
-      background: #fff;
-      padding: 5px 10px;
-      border-radius: 5px;
-    }
-    .container {
-      width: 90%;
-      max-width: 900px;
-      margin: auto;
-      margin-top: 20px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #aaa;
-    }
-    label { font-weight: bold; }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px 15px;
-      background: #333;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    table, th, td {
-      border: 1px solid #777;
-    }
-    th, td {
-      padding: 10px;
-      text-align: center;
-    }
-    #totalBox {
-      margin-top: 20px;
-      padding: 15px;
-      background: #eef;
-      border-radius: 5px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PSG DOOR AND LAMINATION - Billing</title>
+
+<!-- jsPDF + html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+  :root{
+    --primary:#0f6cff;
+    --accent:#ffd166;
+    --muted:#6b7280;
+    --card:#ffffff;
+    --bg:#f3f6fb;
+    --success:#16a34a;
+  }
+  body{font-family:Inter, Arial, sans-serif;background:var(--bg);margin:0;padding:18px;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .brand{
+    display:flex;align-items:center;gap:14px;
+  }
+  .logoBox{width:76px;height:66px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(12,17,43,0.06);overflow:hidden}
+  .logoBox img{max-width:100%;max-height:100%;object-fit:contain}
+  .title{
+    display:flex;flex-direction:column;
+  }
+  .title h1{margin:0;font-size:20px;letter-spacing:1px;background:linear-gradient(90deg,#f59e0b,#ef4444);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+  .title small{color:var(--muted);font-size:12px}
+  .topActions{display:flex;gap:10px;align-items:center}
+  .topActions input[type=file]{display:block}
+  .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(10,20,50,0.06);margin-bottom:16px}
+  label{display:block;font-weight:600;margin-top:8px;font-size:13px;color:#111827}
+  .row{display:flex;gap:12px;align-items:center}
+  .col{flex:1}
+  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;box-sizing:border-box;font-size:14px}
+  button{background:var(--primary);color:#fff;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+  button.ghost{background:transparent;border:1px solid #e6e9ef;color:#111}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{border:1px solid #eef2f7;padding:10px;text-align:left;font-size:13px}
+  th{background:#fbfdff}
+  .right{text-align:right}
+  .totals{display:flex;justify-content:flex-end;margin-top:12px}
+  .totBox{width:340px;background:#fbfbff;padding:12px;border-radius:8px;border:1px solid #eef2f7}
+  .totRow{display:flex;justify-content:space-between;padding:6px 0;color:#111}
+  .small{font-size:12px;color:var(--muted)}
+  .actions{display:flex;gap:8px;margin-top:10px}
+  @media(max-width:800px){ .row{flex-direction:column} .totals{justify-content:stretch} .totBox{width:100%} header{flex-direction:column;align-items:flex-start;gap:8px} }
+</style>
 </head>
-<body><header>
-  <h2>PSG DOOR AND LAMINATION</h2>
-  <input type="file" accept="image/*" id="logoUpload" />
-</header><div class="container">
-  <h3>New Bill Entry</h3><label>Length (ft)</label> <input type="number" id="length" />
+<body>
+<div class="wrap">
 
-<label>Breadth (ft)</label> <input type="number" id="breadth" />
+  <header>
+    <div class="brand">
+      <div class="logoBox" id="logoBox">
+        <!-- logo preview -->
+        <img id="logoPreview" alt="logo" style="display:none">
+        <div id="logoText" style="font-size:12px;color:var(--muted);padding:6px">Logo</div>
+      </div>
+      <div class="title">
+        <h1>PSG DOOR AND LAMINATION</h1>
+        <small class="small">Professional Invoices • PDF Download • Daily Combined PDF</small>
+      </div>
+    </div>
 
-<label>Sq. Ft Rate (₹)</label> <input type="number" id="rate" />
+    <div class="topActions">
+      <label class="small" style="margin:0 6px 0 0">Upload Logo</label>
+      <input type="file" accept="image/*" id="logoUpload">
+      <button class="ghost" onclick="openSaved()">Saved Bills</button>
+    </div>
+  </header>
 
-<label>Raw Material Cost (₹)</label> <input type="number" id="raw" />
+  <!-- Input card -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div style="flex:1">
+        <label>Customer Name</label>
+        <input id="customer" placeholder="Customer name (optional)">
+      </div>
+      <div style="width:160px">
+        <label>Date</label>
+        <input id="billDate" type="date">
+      </div>
+    </div>
 
-<label>Dues (₹)</label> <input type="number" id="due" />
+    <div class="row" style="margin-top:10px">
+      <div class="col">
+        <label>Order Size (L × B)</label>
+        <div style="display:flex;gap:8px">
+          <input id="orderL" type="number" placeholder="Length" min="0" />
+          <input id="orderB" type="number" placeholder="Breadth" min="0" />
+          <select id="unitOrder"><option value="inch">inch</option><option value="ft">ft</option></select>
+        </div>
+        <div class="small">Example: for 81x30 inches, choose inch and enter 81 & 30</div>
+      </div>
 
-<label>Vehicle Rent (₹)</label> <input type="number" id="rent" />
+      <div class="col">
+        <label>Raw Material Size (L × B) (optional)</label>
+        <div style="display:flex;gap:8px">
+          <input id="rawL" type="number" placeholder="Raw Length" min="0"/>
+          <input id="rawB" type="number" placeholder="Raw Breadth" min="0"/>
+          <select id="unitRaw"><option value="inch">inch</option><option value="ft">ft</option></select>
+        </div>
+        <div class="small">If left blank raw cost field is used directly</div>
+      </div>
+    </div>
 
-<button onclick="addBill()">Add Bill</button>
+    <div class="row" style="margin-top:10px">
+      <div style="flex:1">
+        <label>Rate per sq.ft (₹)</label>
+        <input id="rate" type="number" value="60" min="0">
+      </div>
+      <div style="flex:1">
+        <label>Raw Material Cost (₹) — if raw size not given</label>
+        <input id="rawCost" type="number" value="0" min="0">
+      </div>
+      <div style="width:160px">
+        <label>Extra Raw Cost (₹)</label>
+        <input id="extraRaw" type="number" value="0" min="0">
+      </div>
+    </div>
 
-  <table id="billTable">
-    <tr>
-      <th>Date</th>
-      <th>Sq Ft</th>
-      <th>Material</th>
-      <th>Dues</th>
-      <th>Rent</th>
-      <th>Total</th>
-    </tr>
-  </table>  <div id="totalBox">Total: ₹0</div>  <hr>  <h3>View Bills by Date</h3>
-  <input type="date" id="dateFilter" />
-  <button onclick="filterByDate()">Search</button></div><script>
-let bills = [];
+    <div class="row" style="margin-top:10px">
+      <div style="flex:1">
+        <label>Vehicle Rent (₹)</label>
+        <input id="vehicleRent" type="number" value="0" min="0">
+      </div>
+      <div style="flex:1">
+        <label>Previous Dues (₹)</label>
+        <input id="prevDue" type="number" value="0" min="0">
+      </div>
+      <div style="width:220px">
+        <label>Notes (optional)</label>
+        <input id="notes" placeholder="Eg: color, finish">
+      </div>
+    </div>
 
-function addBill() {
-  let len = Number(document.getElementById('length').value);
-  let bre = Number(document.getElementById('breadth').value);
-  let rate = Number(document.getElementById('rate').value);
-  let raw = Number(document.getElementById('raw').value);
-  let due = Number(document.getElementById('due').value);
-  let rent = Number(document.getElementById('rent').value);
+    <div class="actions">
+      <button onclick="addItemToInvoice()">Add Item</button>
+      <button onclick="saveAndDownloadThisBill()" style="background:#16a34a">Save & Download Bill</button>
+      <button class="ghost" onclick="printPreview()">Print Preview</button>
+    </div>
+  </div>
 
-  let sq = len * bre;
-  let total = sq * rate + raw + due + rent;
+  <!-- Invoice preview card -->
+  <div class="card" id="invoiceCard">
+    <div id="invoiceArea" style="background:linear-gradient(180deg,#fff,#fbfbff);padding:14px;border-radius:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
+          <div class="small" id="shopAddr">Door Lamination & Services</div>
+        </div>
+        <div class="small" id="meta">Date: -</div>
+      </div>
 
-  let today = new Date().toISOString().split('T')[0];
+      <div style="margin-top:10px;">
+        <div><strong>Customer: </strong><span id="custView">-</span></div>
+        <table id="itemsTable">
+          <thead>
+            <tr><th>Order</th><th>Raw</th><th>Sq.ft</th><th>Rate</th><th>Raw ₹</th><th class="right">Amount ₹</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
-  bills.push({ date: today, sq, raw, due, rent, total });
+      <div class="totals">
+        <div class="totBox">
+          <div class="totRow"><div class="small">Subtotal</div><div id="subAmt">₹0.00</div></div>
+          <div class="totRow"><div class="small">Extra Raw</div><div id="extraAmt">₹0.00</div></div>
+          <div class="totRow"><div class="small">Vehicle Rent</div><div id="rentAmt">₹0.00</div></div>
+          <div class="totRow"><div class="small">Previous Dues</div><div id="dueAmt">₹0.00</div></div>
+          <hr>
+          <div class="totRow" style="font-weight:800;font-size:18px"><div>Total</div><div id="totalAmt">₹0.00</div></div>
+        </div>
+      </div>
+    </div>
 
-  updateTable(bills);
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="ghost" onclick="clearInvoice()">Clear Invoice</button>
+      <button onclick="addBillToDaily()" style="background:#0ea5a4">Save to Day's List</button>
+      <button onclick="openSaved()" class="ghost">Open Saved Bills</button>
+    </div>
+  </div>
+
+  <!-- Saved bills panel (hidden toggled) -->
+  <div id="savedPanel" class="card" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0">Saved Bills</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="filterDate" type="date">
+        <button onclick="filterSavedByDate()">Filter</button>
+        <button onclick="downloadAllDaily()" style="background:#f97316">Download Day's PDF</button>
+        <button onclick="clearDaily()" class="ghost">Clear Day</button>
+        <button onclick="closeSaved()" class="ghost">Close</button>
+      </div>
+    </div>
+    <div id="savedList" style="margin-top:12px"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Utils ---------- */
+function formatMoney(v){ return '₹' + (Number(v||0)).toFixed(2); }
+function todayISO(d){
+  if(d) return new Date(d).toISOString().split('T')[0];
+  return new Date().toISOString().split('T')[0];
 }
 
-function updateTable(data) {
-  let table = document.getElementById('billTable');
-  table.innerHTML = `
-    <tr>
-      <th>Date</th>
-      <th>Sq Ft</th>
-      <th>Material</th>
-      <th>Dues</th>
-      <th>Rent</th>
-      <th>Total</th>
-    </tr>`;
+/* ---------- Logo upload & persist ---------- */
+const logoInput = document.getElementById('logoUpload');
+const logoPreview = document.getElementById('logoPreview');
+const logoText = document.getElementById('logoText');
 
-  let sum = 0;
+function loadSavedLogo(){
+  try{
+    const b = localStorage.getItem('shopLogo');
+    if(b){
+      logoPreview.src = b;
+      logoPreview.style.display = 'block';
+      logoText.style.display = 'none';
+    } else {
+      logoPreview.style.display = 'none';
+      logoText.style.display = 'block';
+    }
+  }catch(e){}
+}
+logoInput.addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const data = ev.target.result;
+    localStorage.setItem('shopLogo', data);
+    loadSavedLogo();
+  };
+  reader.readAsDataURL(f);
+});
+loadSavedLogo();
 
-  data.forEach(b => {
-    table.innerHTML += `
-      <tr>
-        <td>${b.date}</td>
-        <td>${b.sq}</td>
-        <td>₹${b.raw}</td>
-        <td>₹${b.due}</td>
-        <td>₹${b.rent}</td>
-        <td>₹${b.total}</td>
-      </tr>`;
+/* ---------- Invoice state ---------- */
+let items = [];
+let subtotal = 0;
 
-    sum += b.total;
+function unitToSqft(l,b,unit){
+  l = Number(l) || 0; b = Number(b) || 0;
+  if(unit === 'inch') return Math.round(((l*b)/144)*100)/100;
+  return Math.round((l*b)*100)/100;
+}
+
+function addItemToInvoice(){
+  const orderL = document.getElementById('orderL').value;
+  const orderB = document.getElementById('orderB').value;
+  const unitOrder = document.getElementById('unitOrder').value;
+  const rawL = document.getElementById('rawL').value;
+  const rawB = document.getElementById('rawB').value;
+  const unitRaw = document.getElementById('unitRaw').value;
+  const rate = Number(document.getElementById('rate').value) || 0;
+  const rawCost = Number(document.getElementById('rawCost').value) || 0;
+  const extraRaw = Number(document.getElementById('extraRaw').value) || 0;
+
+  if(!orderL || !orderB){ alert('Please enter order dimensions'); return; }
+
+  const sq = unitToSqft(orderL, orderB, unitOrder);
+  let rawSq = 0;
+  let rawCostUsed = rawCost;
+  if(rawL && rawB){
+    rawSq = unitToSqft(rawL, rawB, unitRaw);
+    // If raw size given we won't use rawCost directly; but still allow extraRaw
+    rawCostUsed = 0;
+  }
+
+  const amount = Math.round((sq * rate + rawCostUsed + (extraRaw)) * 100)/100;
+
+  items.push({
+    order:`${orderL}×${orderB} ${unitOrder}`,
+    raw: rawL && rawB ? `${rawL}×${rawB} ${unitRaw}` : '-',
+    sqft: sq,
+    rate,
+    rawCost: rawCostUsed,
+    extraRaw,
+    amount
   });
 
-  document.getElementById('totalBox').innerText = "Total: ₹" + sum;
+  document.getElementById('custView').innerText = document.getElementById('customer').value || '-';
+  document.getElementById('meta').innerText = 'Date: ' + (document.getElementById('billDate').value || todayISO());
+
+  renderInvoice();
+
+  // clear item inputs but keep customer/date
+  document.getElementById('orderL').value = '';
+  document.getElementById('orderB').value = '';
+  document.getElementById('rawL').value = '';
+  document.getElementById('rawB').value = '';
+  document.getElementById('rawCost').value = 0;
+  document.getElementById('extraRaw').value = 0;
 }
 
-function filterByDate() {
-  let d = document.getElementById('dateFilter').value;
-  let filtered = bills.filter(b => b.date === d);
-  updateTable(filtered);
+/* ---------- Render invoice ---------- */
+function renderInvoice(){
+  const tbody = document.querySelector('#itemsTable tbody');
+  tbody.innerHTML = '';
+  subtotal = 0;
+  items.forEach((it, idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${it.order}</td><td>${it.raw}</td><td>${it.sqft}</td><td>₹${it.rate}</td><td>₹${it.rawCost + (it.extraRaw||0)}</td><td class="right">₹${it.amount.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+    subtotal += Number(it.amount);
+  });
+
+  const extraTotal = items.reduce((s,i)=> s + (Number(i.extraRaw||0)||0), 0);
+  const rent = Number(document.getElementById('vehicleRent').value) || 0;
+  const due = Number(document.getElementById('prevDue').value) || 0;
+
+  document.getElementById('subAmt').innerText = formatMoney(subtotal);
+  document.getElementById('extraAmt').innerText = formatMoney(extraTotal);
+  document.getElementById('rentAmt').innerText = formatMoney(rent);
+  document.getElementById('dueAmt').innerText = formatMoney(due);
+  document.getElementById('totalAmt').innerText = formatMoney(subtotal + extraTotal + rent + due);
 }
-</script></body>
-</html>
+
+/* clear invoice */
+function clearInvoice(){
+  if(!confirm('Clear current invoice?')) return;
+  items = [];
+  renderInvoice();
+  document.getElementById('customer').value = '';
+  document.getElementById('custView').innerText = '-';
+  document.getElementById('meta').innerText = 'Date: -';
+}
+
+/* ---------- Save bills to daily list (localStorage) ---------- */
+function getDaily(){
+  try { return JSON.parse(localStorage.getItem('dayBills') || '[]'); }
+  catch(e){ return []; }
+}
+
+function addBillToDaily(){
+  if(items.length === 0){ alert('Add at least one item'); return; }
+  const day = getDaily();
+  const dateStr = document.getElementById('billDate').value || todayISO();
+  const bill = {
+    id: 'bill_' + Date.now(),
+    shopName: 'PSG DOOR AND LAMINATION',
+    logo: localStorage.getItem('shopLogo') || null,
+    customer: document.getElementById('customer').value || '-',
+    date: dateStr,
+    items: items,
+    subtotal: subtotal,
+    extra: items.reduce((s,i)=> s + (Number(i.extraRaw||0)||0), 0),
+    rent: Number(document.getElementById('vehicleRent').value) || 0,
+    dues: Number(document.getElementById('prevDue').value) || 0,
+    notes: document.getElementById('notes').value || ''
+  };
+  day.push(bill);
+  localStorage.setItem('dayBills', JSON.stringify(day));
+  alert('Bill saved to today list');
+  // clear
+  items = []; renderInvoice();
+}
+
+function saveAndDownloadThisBill(){
+  addBillToDaily();
+  // download last saved bill
+  const day = getDaily();
+  const b = day[day.length-1];
+  if(b) downloadSingleByBill(b);
+}
+
+/* ---------- Saved bills UI ---------- */
+function openSaved(){
+  const panel = document.getElementById('savedPanel');
+  panel.style.display = 'block';
+  refreshSavedList();
+}
+function closeSaved(){ document.getElementById('savedPanel').style.display = 'none'; }
+function refreshSavedList(filterDate){
+  const saved = getDaily();
+  const container = document.getElementById('savedList');
+  container.innerHTML = '';
+  const list = filterDate ? saved.filter(s=>s.date === filterDate) : saved;
+  if(list.length === 0){ container.innerHTML = '<div class="small">No saved bills</div>'; return; }
+  list.forEach(b=>{
+    const div = document.createElement('div');
+    div.style.borderBottom = '1px solid #f1f5f9';
+    div.style.padding = '10px 0';
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>${b.customer}</strong><div class="small">${b.date} • ${b.notes||''}</div></div>
+      <div style="text-align:right">
+        <div style="font-weight:700;margin-bottom:6px">${formatMoney(b.subtotal + b.extra + b.rent + b.dues)}</div>
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button onclick='downloadSingle("${b.id}")' class="ghost">Download</button>
+          <button onclick='downloadSingle("${b.id}")' style="background:#0ea5a4">PDF</button>
+          <button onclick='deleteBill("${b.id}")' class="ghost">Delete</button>
+        </div>
+      </div>
+    </div>`;
+    container.appendChild(div);
+  });
+}
+function filterSavedByDate(){
+  const d = document.getElementById('filterDate').value;
+  if(!d){ refreshSavedList(); return; }
+  refreshSavedList(d);
+}
+
+/* delete bill */
+function deleteBill(id){
+  if(!confirm('Delete this bill?')) return;
+  let day = getDaily();
+  day = day.filter(b=>b.id !== id);
+  localStorage.setItem('dayBills', JSON.stringify(day));
+  refreshSavedList();
+}
+
+/* ---------- PDF generation helpers ---------- */
+function invoiceHTMLForPDF(b){
+  const logo = b.logo || localStorage.getItem('shopLogo') || null;
+  let logoImg = logo ? `<img src="${logo}" style="height:60px;object-fit:contain">` : '<div style="font-size:14px;color:#666">PSG LOGO</div>';
+  let rows = '';
+  b.items.forEach(it=>{
+    rows += `<tr><td style="border:1px solid #eee;padding:6px">${it.order}</td><td style="border:1px solid #eee;padding:6px">${it.raw}</td><td style="border:1px solid #eee;padding:6px;text-align:center">${it.sqft}</td><td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.rate}</td><td style="border:1px solid #eee;padding:6px;text-align:right">₹${(it.rawCost + (it.extraRaw||0)).toFixed(2)}</td><td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.amount.toFixed(2)}</td></tr>`;
+  });
+  return `<div style="font-family:Arial;padding:16px;max-width:780px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
+      <div>${logoImg}</div>
+    </div>
+    <div style="margin-top:8px"><strong>Customer:</strong> ${b.customer} <span style="float:right">${b.date}</span></div>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px">
+      <thead><tr><th style="border:1px solid #eee;padding:6px">Order</th><th style="border:1px solid #eee;padding:6px">Raw</th><th style="border:1px solid #eee;padding:6px">Sqft</th><th style="border:1px solid #eee;padding:6px">Rate</th><th style="border:1px solid #eee;padding:6px">Raw₹</th><th style="border:1px solid #eee;padding:6px">Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <div style="width:300px">
+        <div style="display:flex;justify-content:space-between"><div>Subtotal</div><div>₹${b.subtotal.toFixed(2)}</div></div>
+        <div style="display:flex;justify-content:space-between"><div>Extra</div><div>₹${b.extra.toFixed(2)}</div></div>
+        <div style="display:flex;justify-content:space-between"><div>Vehicle Rent</div><div>₹${b.rent.toFixed(2)}</div></div>
+        <div style="display:flex;justify-content:space-between"><div>Dues</div><div>₹${b.dues.toFixed(2)}</div></div>
+        <hr>
+        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px"><div>Total</div><div>₹${(b.subtotal + b.extra + b.rent + b.dues).toFixed(2)}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* download single saved bill by id */
+async function downloadSingle(id){
+  const day = getDaily();
+  const b = day.find(x=>x.id === id);
+  if(!b){ alert('Bill not found'); return; }
+  downloadSingleByBill(b);
+}
+async function downloadSingleByBill(b){
+  const temp = document.createElement('div');
+  temp.innerHTML = invoiceHTMLForPDF(b);
+  temp.style.display = 'block';
+  temp.style.padding = '10px';
+  document.body.appendChild(temp);
+  const canvas = await html2canvas(temp, {scale:2, useCORS:true});
+  const img = canvas.toDataURL('image/png');
+  document.body.removeChild(temp);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const props = pdf.getImageProperties(img);
+  const w = pdf.internal.pageSize.getWidth();
+  const h = (props.height * w) / props.width;
+  pdf.addImage(img,'PNG',0,0,w,h);
+  pdf.save(`${b.customer || 'bill'}_${b.date}.pdf`);
+}
+
+/* combined PDF for al
