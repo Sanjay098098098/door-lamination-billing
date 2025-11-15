@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Door Lamination Billing</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    body { font-family: Arial; padding: 20px; background: #f2f2f2; }
+    .box { background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #aaa; border-radius: 6px; }
+    button { padding: 12px; width: 100%; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; }
+    .order { padding: 10px; border-bottom: 1px solid #ddd; }
+</style>
+</head>
+
+<body>
+
+<h2>Door Lamination Billing</h2>
+
+<div class="box">
+    <h3>Add New Order</h3>
+
+    <input type="number" id="length" placeholder="Length (inch)">
+    <input type="number" id="breadth" placeholder="Breadth (inch)">
+    <input type="number" id="rate" placeholder="Rate per sq ft">
+    <input type="number" id="raw" placeholder="Raw Material Cost">
+
+    <button onclick="addOrder()">Add Order</button>
+</div>
+
+<div class="box">
+    <h3>Order List</h3>
+    <div id="orders"></div>
+</div>
+
+<script>
+function addOrder() {
+    let L = parseFloat(document.getElementById("length").value);
+    let B = parseFloat(document.getElementById("breadth").value);
+    let rate = parseFloat(document.getElementById("rate").value);
+    let raw = parseFloat(document.getElementById("raw").value);
+
+    if (!L || !B || !rate) {
+        alert("Please enter all required fields");
+        return;
+    }
+
+    let area = (L * B) / 144;
+    let lamination = area * rate;
+    let total = lamination + (raw || 0);
+
+    let orderDiv = document.getElementById("orders");
+
+    orderDiv.innerHTML += `
+        <div class="order">
+            <strong>Size:</strong> ${L}" × ${B}" <br>
+            <strong>Area:</strong> ${area.toFixed(2)} sq ft <br>
+            <strong>Lamination:</strong> ₹${lamination.toFixed(2)} <br>
+            <strong>Raw Material:</strong> ₹${raw || 0} <br>
+            <strong>Total:</strong> ₹${total.toFixed(2)} <br>
+            <small>${new Date().toLocaleString()}</small>
+        </div>
+    `;
+}
+</script>
+
+</body>
+</html>
