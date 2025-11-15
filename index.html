@@ -21,14 +21,10 @@
   body{font-family:Inter, Arial, sans-serif;background:var(--bg);margin:0;padding:18px;}
   .wrap{max-width:1100px;margin:0 auto;}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-  .brand{
-    display:flex;align-items:center;gap:14px;
-  }
+  .brand{display:flex;align-items:center;gap:14px;}
   .logoBox{width:76px;height:66px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(12,17,43,0.06);overflow:hidden}
   .logoBox img{max-width:100%;max-height:100%;object-fit:contain}
-  .title{
-    display:flex;flex-direction:column;
-  }
+  .title{display:flex;flex-direction:column;}
   .title h1{margin:0;font-size:20px;letter-spacing:1px;background:linear-gradient(90deg,#f59e0b,#ef4444);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
   .title small{color:var(--muted);font-size:12px}
   .topActions{display:flex;gap:10px;align-items:center}
@@ -37,7 +33,8 @@
   label{display:block;font-weight:600;margin-top:8px;font-size:13px;color:#111827}
   .row{display:flex;gap:12px;align-items:center}
   .col{flex:1}
-  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;box-sizing:border-box;font-size:14px}
+  input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;box-sizing:border-box;font-size:14px}
+  textarea{min-height:56px}
   button{background:var(--primary);color:#fff;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
   button.ghost{background:transparent;border:1px solid #e6e9ef;color:#111}
   table{width:100%;border-collapse:collapse;margin-top:12px}
@@ -58,7 +55,6 @@
   <header>
     <div class="brand">
       <div class="logoBox" id="logoBox">
-        <!-- logo preview -->
         <img id="logoPreview" alt="logo" style="display:none">
         <div id="logoText" style="font-size:12px;color:var(--muted);padding:6px">Logo</div>
       </div>
@@ -80,11 +76,19 @@
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
       <div style="flex:1">
         <label>Customer Name</label>
-        <input id="customer" placeholder="Customer name (optional)">
+        <input id="customer" placeholder="Customer name">
+      </div>
+      <div style="width:160px">
+        <label>Mobile</label>
+        <input id="customerMobile" placeholder="Mobile number">
       </div>
       <div style="width:160px">
         <label>Date</label>
         <input id="billDate" type="date">
+      </div>
+      <div style="width:140px">
+        <label>Bill No.</label>
+        <input id="billNo" readonly>
       </div>
     </div>
 
@@ -96,17 +100,17 @@
           <input id="orderB" type="number" placeholder="Breadth" min="0" />
           <select id="unitOrder"><option value="inch">inch</option><option value="ft">ft</option></select>
         </div>
-        <div class="small">Example: for 81x30 inches, choose inch and enter 81 & 30</div>
+        <div class="small">Example: 81 × 30 (choose inch)</div>
       </div>
 
       <div class="col">
-        <label>Raw Material Size (L × B) (optional)</label>
+        <label>Raw Material Size (L × B) — optional</label>
         <div style="display:flex;gap:8px">
           <input id="rawL" type="number" placeholder="Raw Length" min="0"/>
           <input id="rawB" type="number" placeholder="Raw Breadth" min="0"/>
           <select id="unitRaw"><option value="inch">inch</option><option value="ft">ft</option></select>
         </div>
-        <div class="small">If left blank raw cost field is used directly</div>
+        <div class="small">Leave blank to use Raw Material Cost field</div>
       </div>
     </div>
 
@@ -159,7 +163,7 @@
       </div>
 
       <div style="margin-top:10px;">
-        <div><strong>Customer: </strong><span id="custView">-</span></div>
+        <div><strong>Customer: </strong><span id="custView">-</span> &nbsp; <span id="custMobile" class="small"></span></div>
         <table id="itemsTable">
           <thead>
             <tr><th>Order</th><th>Raw</th><th>Sq.ft</th><th>Rate</th><th>Raw ₹</th><th class="right">Amount ₹</th></tr>
@@ -187,7 +191,7 @@
     </div>
   </div>
 
-  <!-- Saved bills panel (hidden toggled) -->
+  <!-- Saved bills panel -->
   <div id="savedPanel" class="card" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h3 style="margin:0">Saved Bills</h3>
@@ -205,18 +209,14 @@
 </div>
 
 <script>
-/* ---------- Utils ---------- */
+/* ---------- Utilities ---------- */
 function formatMoney(v){ return '₹' + (Number(v||0)).toFixed(2); }
-function todayISO(d){
-  if(d) return new Date(d).toISOString().split('T')[0];
-  return new Date().toISOString().split('T')[0];
-}
+function todayISO(d){ if(d) return new Date(d).toISOString().split('T')[0]; return new Date().toISOString().split('T')[0]; }
 
 /* ---------- Logo upload & persist ---------- */
 const logoInput = document.getElementById('logoUpload');
 const logoPreview = document.getElementById('logoPreview');
 const logoText = document.getElementById('logoText');
-
 function loadSavedLogo(){
   try{
     const b = localStorage.getItem('shopLogo');
@@ -228,7 +228,7 @@ function loadSavedLogo(){
       logoPreview.style.display = 'none';
       logoText.style.display = 'block';
     }
-  }catch(e){}
+  }catch(e){ logoPreview.style.display='none'; logoText.style.display='block';}
 }
 logoInput.addEventListener('change', e=>{
   const f = e.target.files[0];
@@ -243,6 +243,14 @@ logoInput.addEventListener('change', e=>{
 });
 loadSavedLogo();
 
+/* ---------- Bill numbering (persist) ---------- */
+function nextBillNo(){
+  let n = Number(localStorage.getItem('lastBillNo') || 1000);
+  n++;
+  localStorage.setItem('lastBillNo', n);
+  return n;
+}
+
 /* ---------- Invoice state ---------- */
 let items = [];
 let subtotal = 0;
@@ -253,6 +261,7 @@ function unitToSqft(l,b,unit){
   return Math.round((l*b)*100)/100;
 }
 
+/* add item */
 function addItemToInvoice(){
   const orderL = document.getElementById('orderL').value;
   const orderB = document.getElementById('orderB').value;
@@ -271,8 +280,7 @@ function addItemToInvoice(){
   let rawCostUsed = rawCost;
   if(rawL && rawB){
     rawSq = unitToSqft(rawL, rawB, unitRaw);
-    // If raw size given we won't use rawCost directly; but still allow extraRaw
-    rawCostUsed = 0;
+    rawCostUsed = 0; // if raw size given, we assume raw cost will be calculated separately or extraRaw used
   }
 
   const amount = Math.round((sq * rate + rawCostUsed + (extraRaw)) * 100)/100;
@@ -288,11 +296,12 @@ function addItemToInvoice(){
   });
 
   document.getElementById('custView').innerText = document.getElementById('customer').value || '-';
+  document.getElementById('custMobile').innerText = document.getElementById('customerMobile').value ? '• ' + document.getElementById('customerMobile').value : '';
   document.getElementById('meta').innerText = 'Date: ' + (document.getElementById('billDate').value || todayISO());
 
   renderInvoice();
 
-  // clear item inputs but keep customer/date
+  // clear item inputs (keep customer & date)
   document.getElementById('orderL').value = '';
   document.getElementById('orderB').value = '';
   document.getElementById('rawL').value = '';
@@ -301,14 +310,14 @@ function addItemToInvoice(){
   document.getElementById('extraRaw').value = 0;
 }
 
-/* ---------- Render invoice ---------- */
+/* render invoice table & totals */
 function renderInvoice(){
   const tbody = document.querySelector('#itemsTable tbody');
   tbody.innerHTML = '';
   subtotal = 0;
   items.forEach((it, idx)=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${it.order}</td><td>${it.raw}</td><td>${it.sqft}</td><td>₹${it.rate}</td><td>₹${it.rawCost + (it.extraRaw||0)}</td><td class="right">₹${it.amount.toFixed(2)}</td>`;
+    tr.innerHTML = `<td>${it.order}</td><td>${it.raw}</td><td style="text-align:center">${it.sqft}</td><td style="text-align:right">₹${it.rate}</td><td style="text-align:right">₹${(it.rawCost + (it.extraRaw||0)).toFixed(2)}</td><td class="right">₹${it.amount.toFixed(2)}</td>`;
     tbody.appendChild(tr);
     subtotal += Number(it.amount);
   });
@@ -322,6 +331,9 @@ function renderInvoice(){
   document.getElementById('rentAmt').innerText = formatMoney(rent);
   document.getElementById('dueAmt').innerText = formatMoney(due);
   document.getElementById('totalAmt').innerText = formatMoney(subtotal + extraTotal + rent + due);
+
+  // update bill no display (not committed until save)
+  document.getElementById('billNo').value = localStorage.getItem('lastBillNo') ? Number(localStorage.getItem('lastBillNo')) + 1 : 1001;
 }
 
 /* clear invoice */
@@ -330,11 +342,13 @@ function clearInvoice(){
   items = [];
   renderInvoice();
   document.getElementById('customer').value = '';
+  document.getElementById('customerMobile').value = '';
   document.getElementById('custView').innerText = '-';
+  document.getElementById('custMobile').innerText = '';
   document.getElementById('meta').innerText = 'Date: -';
 }
 
-/* ---------- Save bills to daily list (localStorage) ---------- */
+/* ---------- Save bill to daily list (localStorage) ---------- */
 function getDaily(){
   try { return JSON.parse(localStorage.getItem('dayBills') || '[]'); }
   catch(e){ return []; }
@@ -342,13 +356,15 @@ function getDaily(){
 
 function addBillToDaily(){
   if(items.length === 0){ alert('Add at least one item'); return; }
-  const day = getDaily();
   const dateStr = document.getElementById('billDate').value || todayISO();
+  const newBillNo = nextBillNo();
   const bill = {
     id: 'bill_' + Date.now(),
+    billNo: newBillNo,
     shopName: 'PSG DOOR AND LAMINATION',
     logo: localStorage.getItem('shopLogo') || null,
     customer: document.getElementById('customer').value || '-',
+    mobile: document.getElementById('customerMobile').value || '',
     date: dateStr,
     items: items,
     subtotal: subtotal,
@@ -357,19 +373,20 @@ function addBillToDaily(){
     dues: Number(document.getElementById('prevDue').value) || 0,
     notes: document.getElementById('notes').value || ''
   };
+  const day = getDaily();
   day.push(bill);
   localStorage.setItem('dayBills', JSON.stringify(day));
-  alert('Bill saved to today list');
-  // clear
+  alert('Bill saved to today list (Bill No. ' + newBillNo + ')');
+  // clear invoice
   items = []; renderInvoice();
 }
 
-function saveAndDownloadThisBill(){
+/* save and download single bill */
+async function saveAndDownloadThisBill(){
   addBillToDaily();
-  // download last saved bill
   const day = getDaily();
   const b = day[day.length-1];
-  if(b) downloadSingleByBill(b);
+  if(b) await downloadSingleByBill(b);
 }
 
 /* ---------- Saved bills UI ---------- */
@@ -390,7 +407,7 @@ function refreshSavedList(filterDate){
     div.style.borderBottom = '1px solid #f1f5f9';
     div.style.padding = '10px 0';
     div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
-      <div><strong>${b.customer}</strong><div class="small">${b.date} • ${b.notes||''}</div></div>
+      <div><strong>Bill ${b.billNo}</strong> • ${b.customer} <div class="small">${b.date} • ${b.notes||''}</div></div>
       <div style="text-align:right">
         <div style="font-weight:700;margin-bottom:6px">${formatMoney(b.subtotal + b.extra + b.rent + b.dues)}</div>
         <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -418,7 +435,7 @@ function deleteBill(id){
   refreshSavedList();
 }
 
-/* ---------- PDF generation helpers ---------- */
+/* ---------- PDF generation ---------- */
 function invoiceHTMLForPDF(b){
   const logo = b.logo || localStorage.getItem('shopLogo') || null;
   let logoImg = logo ? `<img src="${logo}" style="height:60px;object-fit:contain">` : '<div style="font-size:14px;color:#666">PSG LOGO</div>';
@@ -431,7 +448,8 @@ function invoiceHTMLForPDF(b){
       <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
       <div>${logoImg}</div>
     </div>
-    <div style="margin-top:8px"><strong>Customer:</strong> ${b.customer} <span style="float:right">${b.date}</span></div>
+    <div style="margin-top:8px"><strong>Bill No:</strong> ${b.billNo} <span style="float:right">${b.date}</span></div>
+    <div style="margin-top:6px"><strong>Customer:</strong> ${b.customer} ${b.mobile ? (' • ' + b.mobile) : ''}</div>
     <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px">
       <thead><tr><th style="border:1px solid #eee;padding:6px">Order</th><th style="border:1px solid #eee;padding:6px">Raw</th><th style="border:1px solid #eee;padding:6px">Sqft</th><th style="border:1px solid #eee;padding:6px">Rate</th><th style="border:1px solid #eee;padding:6px">Raw₹</th><th style="border:1px solid #eee;padding:6px">Amount</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -440,38 +458,4 @@ function invoiceHTMLForPDF(b){
       <div style="width:300px">
         <div style="display:flex;justify-content:space-between"><div>Subtotal</div><div>₹${b.subtotal.toFixed(2)}</div></div>
         <div style="display:flex;justify-content:space-between"><div>Extra</div><div>₹${b.extra.toFixed(2)}</div></div>
-        <div style="display:flex;justify-content:space-between"><div>Vehicle Rent</div><div>₹${b.rent.toFixed(2)}</div></div>
-        <div style="display:flex;justify-content:space-between"><div>Dues</div><div>₹${b.dues.toFixed(2)}</div></div>
-        <hr>
-        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px"><div>Total</div><div>₹${(b.subtotal + b.extra + b.rent + b.dues).toFixed(2)}</div></div>
-      </div>
-    </div>
-  </div>`;
-}
-
-/* download single saved bill by id */
-async function downloadSingle(id){
-  const day = getDaily();
-  const b = day.find(x=>x.id === id);
-  if(!b){ alert('Bill not found'); return; }
-  downloadSingleByBill(b);
-}
-async function downloadSingleByBill(b){
-  const temp = document.createElement('div');
-  temp.innerHTML = invoiceHTMLForPDF(b);
-  temp.style.display = 'block';
-  temp.style.padding = '10px';
-  document.body.appendChild(temp);
-  const canvas = await html2canvas(temp, {scale:2, useCORS:true});
-  const img = canvas.toDataURL('image/png');
-  document.body.removeChild(temp);
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','pt','a4');
-  const props = pdf.getImageProperties(img);
-  const w = pdf.internal.pageSize.getWidth();
-  const h = (props.height * w) / props.width;
-  pdf.addImage(img,'PNG',0,0,w,h);
-  pdf.save(`${b.customer || 'bill'}_${b.date}.pdf`);
-}
-
-/* combined PDF for al
+        
