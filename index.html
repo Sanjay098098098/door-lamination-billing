@@ -1,105 +1,220 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Door Lamination Billing</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:20px; }
-    .container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
-    h2 { text-align:center; }
-    label { font-weight:bold; }
-    input, button { padding:8px; margin:5px 0; width:100%; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { border:1px solid #ccc; padding:10px; text-align:center; }
-    th { background:#ddd; }
-    .btn { background:#007bff; color:white; border:none; cursor:pointer; border-radius:5px; }
-    .btn:hover { opacity:0.8; }
-  </style>
+<meta charset="UTF-8">
+<title>Door Lamination Billing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+    body{font-family: Arial; margin:20px; background:#f3f3f3;}
+    .box{background:white; padding:20px; border-radius:10px; max-width:600px; margin:auto;
+         box-shadow:0 0 10px rgba(0,0,0,0.2);}
+    input,select{width:100%; padding:8px; margin-top:5px; margin-bottom:10px;}
+    button{padding:10px; width:100%; background:black; color:white; border:none; margin-top:10px;}
+    table{width:100%; margin-top:15px; border-collapse:collapse;}
+    th,td{border:1px solid #777; padding:8px; text-align:center;}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>Door Lamination Billing</h2><label>Order Length (inch)</label>
-<input type="number" id="len" />
 
-<label>Order Breadth (inch)</label>
-<input type="number" id="bre" />
+<div class="box">
+    <h2>Door Lamination Billing</h2>
 
-<label>Raw Material Length</label>
-<input type="number" id="rlen" />
+    <label>Upload Logo (optional)</label>
+    <input type="file" accept="image/*" id="logoInput">
 
-<label>Raw Material Breadth</label>
-<input type="number" id="rbre" />
+    <label>Item Name</label>
+    <select id="item">
+        <option value="Door Lamination">Door Lamination</option>
+        <option value="Screw">Screw</option>
+        <option value="Fevicol">Fevicol</option>
+        <option value="Labour Charge">Labour Charge</option>
+        <option value="Other">Other</option>
+    </select>
 
-<label>Rate (per Sqft)</label>
-<input type="number" id="rate" />
+    <label>Size</label>
+    <input type="text" id="size" placeholder="Example: 7x3, 8x4">
 
-<button class="btn" onclick="addItem()">Add Item</button>
+    <label>Quantity</label>
+    <input type="number" id="qty" value="1">
 
-<table id="billTable">
-  <tr>
-    <th>O. Size</th>
-    <th>R. Size</th>
-    <th>Area (sqft)</th>
-    <th>Rate</th>
-    <th>Total</th>
-  </tr>
-</table>
+    <label>Rate (₹)</label>
+    <input type="number" id="rate" value="0">
 
-<h3 id="grandTotal">Grand Total: ₹0</h3>
+    <button onclick="addItem()">Add Item</button>
 
-<button class="btn" onclick="saveBill()">Save Bill</button>
-<button class="btn" onclick="downloadPDF()">Download PDF</button>
-<button class="btn" onclick="window.print()">Print Bill</button>
+    <table id="billTable">
+        <tr>
+            <th>Item</th><th>Size</th><th>Qty</th><th>Rate</th><th>Total</th>
+        </tr>
+    </table>
 
-  </div><script>
-let totalAmt = 0;
-let billData = [];
+    <h3>Total: ₹<span id="total">0</span></h3>
+    <h3>GST (18%): ₹<span id="gst">0</span></h3>
+    <h2>Grand Total: ₹<span id="grand">0</span></h2>
 
-function addItem() {
-  let L = parseFloat(document.getElementById('len').value);
-  let B = parseFloat(document.getElementById('bre').value);
-  let RL = parseFloat(document.getElementById('rlen').value);
-  let RB = parseFloat(document.getElementById('rbre').value);
-  let rate = parseFloat(document.getElementById('rate').value);
+    <button onclick="downloadBill()">Download Bill PDF</button>
+    <button onclick="saveDaily()">Save to Daily Report</button>
+    <button onclick="downloadDailyReport()">Download Daily Report PDF</button>
+</div>
 
-  if(!L || !B || !RL || !RB || !rate){ alert("Please fill all fields"); return; }
+<script>
+let items = [];
+let dailyBills = [];
+let logoData = null;
 
-  let sqft = (RL * RB) / 144;
-  let total = sqft * rate;
+// LOGO LOAD
+document.getElementById("logoInput").addEventListener("change", function(e){
+    let reader = new FileReader();
+    reader.onload = function(){ logoData = reader.result; };
+    reader.readAsDataURL(e.target.files[0]);
+});
 
-  billData.push({L,B,RL,RB,sqft,total});
+// ADD ITEM
+function addItem(){
+    let item = document.getElementById("item").value;
+    let size = document.getElementById("size").value;
+    let qty = parseInt(document.getElementById("qty").value);
+    let rate = parseFloat(document.getElementById("rate").value);
 
-  document.getElementById('billTable').innerHTML += `
-    <tr>
-      <td>${L} x ${B}</td>
-      <td>${RL} x ${RB}</td>
-      <td>${sqft.toFixed(2)}</td>
-      <td>${rate}</td>
-      <td>₹${total.toFixed(2)}</td>
-    </tr>
-  `;
+    if(!size || qty <= 0 || rate <= 0){
+        alert("Please fill all fields correctly.");
+        return;
+    }
 
-  totalAmt += total;
-  document.getElementById('grandTotal').innerHTML = "Grand Total: ₹" + totalAmt.toFixed(2);
+    let total = qty * rate;
+
+    items.push({item, size, qty, rate, total});
+    updateTable();
 }
 
-function saveBill(){
-  let today = new Date().toLocaleDateString();
-  let saved = JSON.parse(localStorage.getItem('dailyBills') || "{}");
-  saved[today] = (saved[today] || []);
-  saved[today].push(billData);
-  localStorage.setItem('dailyBills', JSON.stringify(saved));
-  alert("Bill Saved");
+// UPDATE TABLE & TOTAL
+function updateTable(){
+    let table = document.getElementById("billTable");
+    table.innerHTML = `
+        <tr>
+            <th>Item</th><th>Size</th><th>Qty</th><th>Rate</th><th>Total</th>
+        </tr>
+    `;
+
+    let sum = 0;
+
+    items.forEach(x=>{
+        sum += x.total;
+        table.innerHTML += `
+            <tr>
+                <td>${x.item}</td>
+                <td>${x.size}</td>
+                <td>${x.qty}</td>
+                <td>${x.rate}</td>
+                <td>${x.total}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("total").innerText = sum;
+    let gst = Math.round(sum * 0.18);
+    document.getElementById("gst").innerText = gst;
+    document.getElementById("grand").innerText = sum + gst;
 }
 
-function downloadPDF(){
-  let content = document.body.innerHTML;
-  let win = window.open('', '', 'height=700,width=900');
-  win.document.write('<html><head><title>Bill PDF</title></head><body>');
-  win.document.write(content);
-  win.document.write('</body></html>');
-  win.document.close();
-  win.print();
+// DOWNLOAD SINGLE BILL PDF
+function downloadBill(){
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    let y = 15;
+
+    if(logoData){
+        pdf.addImage(logoData, "PNG", 150, 5, 40, 20);
+    }
+
+    pdf.setFontSize(18);
+    pdf.text("Door Lamination Bill", 10, y); y+=15;
+
+    pdf.setFontSize(12);
+
+    items.forEach(x=>{
+        pdf.text(`${x.item} | Size: ${x.size} | Qty: ${x.qty} | ₹${x.rate} = ₹${x.total}`, 10, y);
+        y += 7;
+    });
+
+    y+=5;
+    pdf.text(`Total: ₹${document.getElementById("total").innerText}`, 10, y); y+=7;
+    pdf.text(`GST (18%): ₹${document.getElementById("gst").innerText}`, 10, y); y+=7;
+    pdf.text(`Grand Total: ₹${document.getElementById("grand").innerText}`, 10, y);
+
+    pdf.save("Bill.pdf");
 }
-</script></body>
+
+// SAVE TO DAILY REPORT
+function saveDaily(){
+    let total = parseInt(document.getElementById("total").innerText);
+    let gst = parseInt(document.getElementById("gst").innerText);
+    let grand = parseInt(document.getElementById("grand").innerText);
+
+    dailyBills.push({
+        items: structuredClone(items),
+        total, gst, grand,
+        date: new Date().toLocaleString()
+    });
+
+    items = [];
+    updateTable();
+    alert("Saved to Daily Report!");
+}
+
+// DOWNLOAD DAILY REPORT
+function downloadDailyReport(){
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    let y = 20;
+
+    pdf.setFontSize(18);
+    pdf.text("Daily Billing Report", 10, y);
+    y+=15;
+
+    let totalAmt = 0, totalGST = 0, grandTotal = 0;
+
+    dailyBills.forEach((bill, i)=>{
+        pdf.setFontSize(14);
+        pdf.text(`Bill ${i+1} (${bill.date})`, 10, y); y+=10;
+
+        pdf.setFontSize(11);
+
+        bill.items.forEach(item=>{
+            pdf.text(`${item.item} | Size ${item.size} | Qty ${item.qty} | ₹${item.rate} = ₹${item.total}`, 10, y);
+            y+=6;
+        });
+
+        pdf.text(`Total: ₹${bill.total}`, 10, y); y+=6;
+        pdf.text(`GST: ₹${bill.gst}`, 10, y); y+=6;
+        pdf.text(`Grand Total: ₹${bill.grand}`, 10, y); y+=10;
+
+        pdf.line(10, y, 200, y);
+        y+=10;
+
+        totalAmt += bill.total;
+        totalGST += bill.gst;
+        grandTotal += bill.grand;
+
+        if(y > 260){ pdf.addPage(); y=20; }
+    });
+
+    // SUMMARY PAGE
+    pdf.addPage();
+    pdf.setFontSize(18);
+    pdf.text("Daily Summary", 10, 20);
+
+    pdf.setFontSize(12);
+    pdf.text(`Total Bills: ${dailyBills.length}`, 10, 40);
+    pdf.text(`Total Amount (Without GST): ₹${totalAmt}`, 10, 55);
+    pdf.text(`Total GST: ₹${totalGST}`, 10, 70);
+    pdf.text(`Grand Total (With GST): ₹${grandTotal}`, 10, 85);
+
+    pdf.save("Daily_Report.pdf");
+}
+</script>
+
+</body>
 </html>
