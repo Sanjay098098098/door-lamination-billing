@@ -3,64 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <title>Door Lamination Billing</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-    body { font-family: Arial; padding: 20px; background: #f2f2f2; }
-    .box { background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #aaa; border-radius: 6px; }
-    button { padding: 12px; width: 100%; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; }
-    .order { padding: 10px; border-bottom: 1px solid #ddd; }
+    body { font-family: Arial; padding: 20px; }
+    label { font-weight: bold; }
+    input { padding: 6px; margin: 5px; width: 200px; }
+    button { padding: 10px 20px; margin-top: 10px; }
+    .box { border: 1px solid #000; padding: 20px; width: 350px; }
+    .result { margin-top: 20px; font-size: 18px; font-weight: bold; }
 </style>
 </head>
-
 <body>
 
-<h2>Door Lamination Billing</h2>
+<h2>Door Lamination Billing System</h2>
 
 <div class="box">
-    <h3>Add New Order</h3>
+    <label>Length (in feet):</label><br>
+    <input type="number" id="length"><br>
 
-    <input type="number" id="length" placeholder="Length (inch)">
-    <input type="number" id="breadth" placeholder="Breadth (inch)">
-    <input type="number" id="rate" placeholder="Rate per sq ft">
-    <input type="number" id="raw" placeholder="Raw Material Cost">
+    <label>Breadth (in feet):</label><br>
+    <input type="number" id="breadth"><br>
 
-    <button onclick="addOrder()">Add Order</button>
+    <label>Raw Material Cost (per sq.ft):</label><br>
+    <input type="number" id="raw"><br>
+
+    <button onclick="calculate()">Calculate Bill</button>
 </div>
 
-<div class="box">
-    <h3>Order List</h3>
-    <div id="orders"></div>
-</div>
+<div class="result" id="result"></div>
 
 <script>
-function addOrder() {
-    let L = parseFloat(document.getElementById("length").value);
-    let B = parseFloat(document.getElementById("breadth").value);
-    let rate = parseFloat(document.getElementById("rate").value);
+function calculate() {
+    let l = parseFloat(document.getElementById("length").value);
+    let b = parseFloat(document.getElementById("breadth").value);
     let raw = parseFloat(document.getElementById("raw").value);
 
-    if (!L || !B || !rate) {
-        alert("Please enter all required fields");
+    if (!l || !b || !raw) {
+        alert("Please fill all fields");
         return;
     }
 
-    let area = (L * B) / 144;
-    let lamination = area * rate;
-    let total = lamination + (raw || 0);
+    let area = l * b;
+    let total = area * raw;
 
-    let orderDiv = document.getElementById("orders");
-
-    orderDiv.innerHTML += `
-        <div class="order">
-            <strong>Size:</strong> ${L}" × ${B}" <br>
-            <strong>Area:</strong> ${area.toFixed(2)} sq ft <br>
-            <strong>Lamination:</strong> ₹${lamination.toFixed(2)} <br>
-            <strong>Raw Material:</strong> ₹${raw || 0} <br>
-            <strong>Total:</strong> ₹${total.toFixed(2)} <br>
-            <small>${new Date().toLocaleString()}</small>
-        </div>
-    `;
+    document.getElementById("result").innerHTML =
+        `Total Area: ${area} sq.ft <br> Total Bill: ₹${total}`;
 }
 </script>
 
