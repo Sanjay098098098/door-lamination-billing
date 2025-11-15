@@ -1,380 +1,166 @@
-<!DOCTYPE html>
-<html lang="hi">
+<!DOCTYPE html><html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Door Lamination - Billing</title>
-
-<!-- jsPDF + html2canvas (CDN) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-<style>
-  body{font-family:Segoe UI, Arial; background:#f4f6f8; margin:0; padding:18px;}
-  .wrap{max-width:900px;margin:0 auto;}
-  .card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:16px;}
-  h1{margin:0 0 10px 0;font-size:20px}
-  label{display:block;font-weight:600;margin-top:8px}
-  input, select{width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box}
-  .row{display:flex;gap:10px}
-  .col{flex:1}
-  button{background:#007bff;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:600}
-  button.secondary{background:#28a745}
-  table{width:100%;border-collapse:collapse;margin-top:12px}
-  th,td{border:1px solid #e4e6ea;padding:8px;text-align:left}
-  .right{text-align:right}
-  .small{font-size:13px;color:#666}
-  #logoPreview{height:60px;object-fit:contain}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .actions{display:flex;gap:8px}
-  @media(max-width:700px){ .row{flex-direction:column} }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSG DOOR AND LAMINATION - Billing</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #333;
+      color: #fff;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 1px;
+    }
+    #logoUpload {
+      background: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: auto;
+      margin-top: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #aaa;
+    }
+    label { font-weight: bold; }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 15px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #777;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    #totalBox {
+      margin-top: 20px;
+      padding: 15px;
+      background: #eef;
+      border-radius: 5px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
 </head>
-<body>
-<div class="wrap">
-  <div class="card topbar">
-    <div style="display:flex;gap:12px;align-items:center">
-      <div>
-        <img id="logoPreview" src="logo.png" alt="logo" onerror="this.style.display='none'">
-      </div>
-      <div>
-        <h1>Door Lamination — Billing System</h1>
-        <div class="small">Professional invoices • PDF download • Daily combined PDF</div>
-      </div>
-    </div>
+<body><header>
+  <h2>PSG DOOR AND LAMINATION</h2>
+  <input type="file" accept="image/*" id="logoUpload" />
+</header><div class="container">
+  <h3>New Bill Entry</h3><label>Length (ft)</label> <input type="number" id="length" />
 
-    <div class="actions">
-      <button onclick="openSaved()">Saved Bills</button>
-      <button onclick="downloadAllDaily()" class="secondary">Download Day's PDF</button>
-    </div>
-  </div>
+<label>Breadth (ft)</label> <input type="number" id="breadth" />
 
-  <!-- Input card -->
-  <div class="card">
-    <label>Customer Name</label>
-    <input id="customer" placeholder="Customer name (e.g. Vikash)">
+<label>Sq. Ft Rate (₹)</label> <input type="number" id="rate" />
 
-    <div class="row" style="margin-top:8px">
-      <div class="col">
-        <label>Order Size (inch) — eg. 81x30</label>
-        <input id="orderSize" placeholder="81x30">
-      </div>
-      <div class="col">
-        <label>Raw Material Size (inch) — eg. 82x32</label>
-        <input id="rawSize" placeholder="82x32">
-      </div>
-    </div>
+<label>Raw Material Cost (₹)</label> <input type="number" id="raw" />
 
-    <div class="row">
-      <div class="col">
-        <label>Rate per sq.ft (₹)</label>
-        <input id="rate" type="number" value="60">
-      </div>
-      <div class="col">
-        <label>Extra Raw Material Cost (optional) ₹</label>
-        <input id="extraRaw" type="number" value="0">
-      </div>
-    </div>
+<label>Dues (₹)</label> <input type="number" id="due" />
 
-    <div style="margin-top:10px;display:flex;gap:8px">
-      <button onclick="addToInvoice()">Add Item</button>
-      <button onclick="saveBillAsPDF()" class="secondary">Save & Download This Bill</button>
-    </div>
-  </div>
+<label>Vehicle Rent (₹)</label> <input type="number" id="rent" />
 
-  <!-- Invoice preview -->
-  <div class="card" id="invoiceCard">
-    <div id="invoiceArea">
-      <!-- This area will be converted to PDF -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div>
-          <strong id="shopName">Your Shop Name</strong><br>
-          <span class="small" id="shopAddr">Door Lamination</span>
-        </div>
-        <div class="small" id="billMeta">Date: -</div>
-      </div>
+<button onclick="addBill()">Add Bill</button>
 
-      <div style="border-top:1px solid #eee;padding-top:8px">
-        <div><strong>Customer:</strong> <span id="custView">-</span></div>
-        <table id="itemsTable">
-          <thead>
-            <tr><th>Order Size</th><th>Raw Size</th><th>Sq.ft</th><th>Rate</th><th>Raw ₹</th><th class="right">Amount ₹</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div style="display:flex;justify-content:flex-end;margin-top:12px">
-          <div style="width:320px">
-            <div style="display:flex;justify-content:space-between"><div class="small">Subtotal</div><div id="subAmt">₹0</div></div>
-            <div style="display:flex;justify-content:space-between"><div class="small">Extra Raw</div><div id="extraAmt">₹0</div></div>
-            <hr>
-            <div style="display:flex;justify-content:space-between;font-weight:700;font-size:18px"><div>Total</div><div id="totalAmt">₹0</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <table id="billTable">
+    <tr>
+      <th>Date</th>
+      <th>Sq Ft</th>
+      <th>Material</th>
+      <th>Dues</th>
+      <th>Rent</th>
+      <th>Total</th>
+    </tr>
+  </table>  <div id="totalBox">Total: ₹0</div>  <hr>  <h3>View Bills by Date</h3>
+  <input type="date" id="dateFilter" />
+  <button onclick="filterByDate()">Search</button></div><script>
+let bills = [];
 
-    <div style="margin-top:12px;display:flex;gap:8px">
-      <button onclick="clearInvoice()">Clear</button>
-      <button onclick="printPreview()">Print Preview</button>
-      <button onclick="addBillToDaily()" class="secondary">Save to Day's List</button>
-    </div>
-  </div>
+function addBill() {
+  let len = Number(document.getElementById('length').value);
+  let bre = Number(document.getElementById('breadth').value);
+  let rate = Number(document.getElementById('rate').value);
+  let raw = Number(document.getElementById('raw').value);
+  let due = Number(document.getElementById('due').value);
+  let rent = Number(document.getElementById('rent').value);
 
-  <!-- Saved bills -->
-  <div id="savedList" class="card" style="display:none">
-    <h3>Saved Bills (Today)</h3>
-    <div id="savedContainer"></div>
-    <div style="margin-top:10px">
-      <button onclick="downloadAllDaily()" class="secondary">Download All as One PDF</button>
-      <button onclick="clearDaily()" style="margin-left:8px">Clear Day</button>
-      <button onclick="closeSaved()" style="margin-left:8px">Close</button>
-    </div>
-  </div>
-</div>
+  let sq = len * bre;
+  let total = sq * rate + raw + due + rent;
 
-<script>
-/* ======= Helper functions ======= */
-function parseSizeToSqft(s){
-  // expects like "81x30" (inches)
-  if(!s) return 0;
-  let parts = s.toString().split('x').map(p=>p.trim());
-  if(parts.length<2) return 0;
-  let a = parseFloat(parts[0]) || 0;
-  let b = parseFloat(parts[1]) || 0;
-  // inches -> square feet
-  let sqft = (a * b) / 144;
-  return Math.round(sqft*100)/100;
+  let today = new Date().toISOString().split('T')[0];
+
+  bills.push({ date: today, sq, raw, due, rent, total });
+
+  updateTable(bills);
 }
 
-/* state */
-let items = [];
-let subtotal = 0;
-let extraRaw = 0;
+function updateTable(data) {
+  let table = document.getElementById('billTable');
+  table.innerHTML = `
+    <tr>
+      <th>Date</th>
+      <th>Sq Ft</th>
+      <th>Material</th>
+      <th>Dues</th>
+      <th>Rent</th>
+      <th>Total</th>
+    </tr>`;
 
-/* load daily saved from localStorage */
-function getDaily(){
-  try {
-    return JSON.parse(localStorage.getItem('dayBills')||'[]');
-  } catch(e){ return []; }
-}
+  let sum = 0;
 
-/* render invoice */
-function renderInvoice(){
-  const tbody = document.querySelector('#itemsTable tbody');
-  tbody.innerHTML = '';
-  subtotal = 0;
-  items.forEach((it, idx)=>{
-    let tr = document.createElement('tr');
-    tr.innerHTML = `<td>${it.order}</td><td>${it.raw}</td><td>${it.sq}</td><td>₹${it.rate}</td><td>₹${it.extraRaw||0}</td><td class="right">₹${it.amount}</td>`;
-    tbody.appendChild(tr);
-    subtotal += parseFloat(it.amount);
+  data.forEach(b => {
+    table.innerHTML += `
+      <tr>
+        <td>${b.date}</td>
+        <td>${b.sq}</td>
+        <td>₹${b.raw}</td>
+        <td>₹${b.due}</td>
+        <td>₹${b.rent}</td>
+        <td>₹${b.total}</td>
+      </tr>`;
+
+    sum += b.total;
   });
-  extraRaw = items.reduce((s,i)=> s + (parseFloat(i.extraRaw||0)||0), 0);
-  document.getElementById('subAmt').innerText = '₹' + subtotal.toFixed(2);
-  document.getElementById('extraAmt').innerText = '₹' + extraRaw.toFixed(2);
-  document.getElementById('totalAmt').innerText = '₹' + (subtotal + extraRaw).toFixed(2);
+
+  document.getElementById('totalBox').innerText = "Total: ₹" + sum;
 }
 
-/* add single item to current invoice */
-function addToInvoice(){
-  let cust = document.getElementById('customer').value.trim();
-  let order = document.getElementById('orderSize').value.trim();
-  let raw = document.getElementById('rawSize').value.trim();
-  let rate = parseFloat(document.getElementById('rate').value) || 0;
-  let extra = parseFloat(document.getElementById('extraRaw').value) || 0;
-
-  if(!order || !raw){ alert('Order size aur raw size dalein (eg. 81x30)'); return; }
-  let sq = parseSizeToSqft(order);
-  let amount = (sq * rate).toFixed(2);
-
-  items.push({customer:cust || '-', order, raw, sq, rate, extraRaw: extra, amount: parseFloat(amount)});
-  document.getElementById('custView').innerText = cust || '-';
-  document.getElementById('billMeta').innerText = 'Date: ' + new Date().toLocaleString();
-  renderInvoice();
-
-  // reset item inputs but keep customer
-  document.getElementById('orderSize').value = '';
-  document.getElementById('rawSize').value = '';
-  document.getElementById('extraRaw').value = '0';
+function filterByDate() {
+  let d = document.getElementById('dateFilter').value;
+  let filtered = bills.filter(b => b.date === d);
+  updateTable(filtered);
 }
-
-/* clear current invoice */
-function clearInvoice(){
-  if(!confirm('Clear current invoice?')) return;
-  items = [];
-  renderInvoice();
-  document.getElementById('custView').innerText = '-';
-  document.getElementById('billMeta').innerText = 'Date: -';
-}
-
-/* save current bill to daily list (localStorage) */
-function addBillToDaily(){
-  if(items.length===0){ alert('Add at least one item'); return; }
-  let day = getDaily();
-  let bill = {
-    id: 'bill_' + Date.now(),
-    shopName: document.getElementById('shopName').innerText,
-    customer: document.getElementById('customer').value || '-',
-    date: new Date().toLocaleString(),
-    items: items,
-    subtotal: subtotal,
-    extra: extraRaw,
-    total: (subtotal + extraRaw)
-  };
-  day.push(bill);
-  localStorage.setItem('dayBills', JSON.stringify(day));
-  alert('Bill added to today list');
-  // clear invoice for next
-  items = [];
-  renderInvoice();
-  document.getElementById('customer').value = '';
-}
-
-/* show saved bills panel */
-function openSaved(){
-  const saved = getDaily();
-  const container = document.getElementById('savedContainer');
-  container.innerHTML = '';
-  if(saved.length===0){ container.innerHTML = '<div class="small">No saved bills today.</div>'; }
-  saved.forEach(b=>{
-    let div = document.createElement('div');
-    div.style.borderBottom = '1px solid #eee';
-    div.style.padding = '8px 0';
-    div.innerHTML = `<div style="display:flex;justify-content:space-between"><div><strong>${b.customer}</strong><div class="small">${b.date}</div></div><div style="text-align:right">₹${b.total.toFixed(2)}<br><button onclick='downloadSingle("${b.id}")' style="margin-top:6px">Download</button></div></div>`;
-    container.appendChild(div);
-  });
-  document.getElementById('savedList').style.display = 'block';
-}
-function closeSaved(){ document.getElementById('savedList').style.display='none'; }
-
-/* clear daily saved */
-function clearDaily(){
-  if(!confirm('Clear all saved bills for today?')) return;
-  localStorage.removeItem('dayBills');
-  openSaved();
-}
-
-/* ===== PDF generation ===== */
-async function saveBillAsPDF(){
-  if(items.length===0){ alert('Add at least one item'); return; }
-  const { jsPDF } = window.jspdf;
-  // clone invoiceArea so we can style for PDF if needed
-  const area = document.getElementById('invoiceArea');
-
-  // temporarily set fixed width for good PDF quality
-  const canvas = await html2canvas(area, {scale:2, useCORS:true});
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF('p','pt','a4');
-  const imgProps = pdf.getImageProperties(imgData);
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-  const fname = 'bill_' + (document.getElementById('customer').value || 'customer') + '_' + Date.now() + '.pdf';
-  pdf.save(fname);
-}
-
-/* download single saved bill (recreate invoice view and generate) */
-async function downloadSingle(billId){
-  const saved = getDaily();
-  const bill = saved.find(b=>b.id===billId);
-  if(!bill) { alert('Bill not found'); return; }
-
-  // build temporary DOM
-  const temp = document.createElement('div');
-  temp.style.width = '800px';
-  temp.style.background = '#fff';
-  temp.style.padding = '20px';
-  temp.innerHTML = invoiceHTMLFromBill(bill);
-  document.body.appendChild(temp);
-  const canvas = await html2canvas(temp, {scale:2, useCORS:true});
-  const img = canvas.toDataURL('image/png');
-  document.body.removeChild(temp);
-
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','pt','a4');
-  const props = pdf.getImageProperties(img);
-  const w = pdf.internal.pageSize.getWidth();
-  const h = (props.height * w) / props.width;
-  pdf.addImage(img,'PNG',0,0,w,h);
-  pdf.save((bill.customer||'bill') + '_' + bill.date.replace(/[:,\s]/g,'_') + '.pdf');
-}
-
-/* build simple html string for a bill */
-function invoiceHTMLFromBill(b){
-  let rows = '';
-  b.items.forEach(it=>{
-    rows += `<tr><td>${it.order}</td><td>${it.raw}</td><td>${it.sq}</td><td>₹${it.rate}</td><td>₹${it.extraRaw||0}</td><td class="right">₹${it.amount}</td></tr>`;
-  });
-  return `<div style="font-family:Arial;padding:10px;">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><strong>${b.shopName}</strong><div class="small">Door Lamination</div></div>
-      <div class="small">Date: ${b.date}</div>
-    </div>
-    <div style="margin-top:8px"><strong>Customer:</strong> ${b.customer}</div>
-    <table style="width:100%;border-collapse:collapse;margin-top:8px">
-      <thead><tr><th style="border:1px solid #ddd;padding:6px">Order</th><th style="border:1px solid #ddd;padding:6px">Raw</th><th style="border:1px solid #ddd;padding:6px">Sqft</th><th style="border:1px solid #ddd;padding:6px">Rate</th><th style="border:1px solid #ddd;padding:6px">Raw</th><th style="border:1px solid #ddd;padding:6px">Amount</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div style="display:flex;justify-content:flex-end;margin-top:10px">
-      <div style="width:260px">
-        <div style="display:flex;justify-content:space-between"><div>Subtotal</div><div>₹${b.subtotal.toFixed(2)}</div></div>
-        <div style="display:flex;justify-content:space-between"><div>Extra</div><div>₹${b.extra.toFixed(2)}</div></div>
-        <hr>
-        <div style="display:flex;justify-content:space-between;font-weight:700"><div>Total</div><div>₹${b.total.toFixed(2)}</div></div>
-      </div>
-    </div>
-  </div>`;
-}
-
-/* create combined PDF for all saved bills (page-by-page) */
-async function downloadAllDaily(){
-  const saved = getDaily();
-  if(saved.length===0){ alert('No saved bills today.'); return; }
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','pt','a4');
-  for(let i=0;i<saved.length;i++){
-    const bill = saved[i];
-    const temp = document.createElement('div');
-    temp.style.width = '800px';
-    temp.style.background = '#fff';
-    temp.style.padding = '20px';
-    temp.innerHTML = invoiceHTMLFromBill(bill);
-    document.body.appendChild(temp);
-    const canvas = await html2canvas(temp, {scale:2, useCORS:true});
-    const imgData = canvas.toDataURL('image/png');
-    const props = pdf.getImageProperties(imgData);
-    const w = pdf.internal.pageSize.getWidth();
-    const h = (props.height * w) / props.width;
-    if(i>0) pdf.addPage();
-    pdf.addImage(imgData,'PNG',0,0,w,h);
-    document.body.removeChild(temp);
-  }
-  pdf.save('Daily_Bills_' + new Date().toISOString().slice(0,10) + '.pdf');
-}
-
-/* print preview for currently rendered invoice */
-function printPreview(){
-  // open new window and print
-  const w = window.open('', '_blank');
-  w.document.write('<html><head><title>Print</title></head><body>');
-  w.document.write(document.getElementById('invoiceArea').outerHTML);
-  w.document.write('</body></html>');
-  w.document.close();
-  w.focus();
-  setTimeout(()=>{ w.print(); }, 600);
-}
-
-/* helper to download single saved bill from saved list via onclick string */
-window.downloadSingle = downloadSingle;
-
-/* on first load, ensure logo preview tries to load from repo root */
-window.addEventListener('load', ()=>{
-  // if your logo is hosted somewhere else, change this src
-  const logo = document.getElementById('logoPreview');
-  // If you want to change shop name/address by default, edit below:
-  document.getElementById('shopName').innerText = 'Your Shop Name';
-  document.getElementById('shopAddr').innerText = 'Door Lamination';
-});
-</script>
-</body>
-                </html>
+</script></body>
+</html>
