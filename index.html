@@ -1,3 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PSG Door & Lamination — Billing (Premium)</title>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg: #f0f4f9;
+    --card: #ffffff;
+    --accent: #0f6cff;   /* primary blue */
+    --accent2: #ffb400;  /* warm accent */
+    --muted: #6b7280;
+    --shadow: 0 10px 30px rgba(16,24,40,0.08);
+  }
+  * { box-sizing: border-box; }
+  body{ font-family: Inter, Arial, sans-serif; background:var(--bg); margin:0; padding:22px; color:#0b1220; }
+  .wrap{ max-width:1100px; margin:0 auto; }
+
+  header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+  .brand{ display:flex; gap:14px; align-items:center; }
+  .logoSquare{ width:88px; height:68px; border-radius:10px; background:var(--card); display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:var(--shadow); }
+  .logoSquare img{ max-width:100%; max-height:100%; object-fit:contain; }
+  h1{ margin:0; font-size:20px; letter-spacing:1px; font-weight:800; background: linear-gradient(90deg,#ffb400,#ef4444); -webkit-background-clip:text; color:transparent;}
+  .tag{ font-size:12px; color:var(--muted); }
+
+  .topActions{ display:flex; gap:8px; align-items:center; }
+
+  .card{ background:var(--card); padding:14px; border-radius:12px; box-shadow:var(--shadow); margin-bottom:14px; }
+
+  .grid{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; align-items:start; }
+  .col-4{ grid-column: span 4; } .col-6{ grid-column: span 6; } .col-3{ grid-column: span 3; } .col-12{ grid-column: span 12; }
+  label{ display:block; font-weight:700; font-size:13px; color:#111827; margin-bottom:6px; }
+  input, select, textarea{ width:100%; padding:10px; border-radius:8px; border:1px solid #e6e9ef; font-size:14px; }
+  button{ background:var(--accent); color:#fff; padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:700; }
+  .btn-ghost{ background:transparent; border:1px solid #e6e9ef; color:#111; padding:8px 10px; border-radius:8px; cursor:pointer; }
+  table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
+  th, td{ border:1px solid #eef2f7; padding:10px; text-align:left; }
+  th{ background:#fbfdff; font-weight:700; }
+  .right{ text-align:right; }
+  .totals{ display:flex; justify-content:flex-end; }
+  .totBox{ width:360px; background:#fbfbff; padding:12px; border-radius:10px; border:1px solid #eef2f7; }
+  .totRow{ display:flex; justify-content:space-between; padding:6px 0; }
+  .muted{ color:var(--muted); font-size:13px; }
+  @media(max-width:900px){
+    .grid{ grid-template-columns: repeat(6,1fr); }
+    .col-4{ grid-column: span 6; } .col-6{ grid-column: span 6; } .col-3{ grid-column: span 6; } .col-12{ grid-column: span 6; }
+    .totBox{ width:100%; }
+    header{ flex-direction:column; align-items:flex-start; gap:8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logoSquare" id="logoBox">
+        <img id="logoImg" style="display:none" alt="logo">
+        <div id="logoPlaceholder" class="muted">Upload Logo</div>
+      </div>
+      <div>
+        <h1>PSG DOOR AND LAMINATION</h1>
+        <div class="tag">Premium billing • Save bills • PDF export</div>
+      </div>
+    </div>
+
+    <div class="topActions">
+      <input id="logoFile" type="file" accept="image/*" class="btn-ghost" />
+      <button class="btn-ghost" onclick="openSavedPanel()">Saved Bills</button>
+    </div>
+  </header>
+
+  <!-- INPUT: customer + basic -->
+  <div class="card">
+    <div class="grid">
+      <div class="col-4">
+        <label>Customer Name</label>
+        <input id="customerName" placeholder="Customer full name" />
+      </div>
+      <div class="col-3">
+        <label>Mobile</label>
+        <input id="customerMobile" placeholder="Phone number" />
+      </div>
+      <div class="col-3">
+        <label>Date</label>
+        <input id="billDate" type="date" />
+      </div>
+      <div class="col-2">
+        <label>Bill No.</label>
+        <input id="billNumber" readonly />
+      </div>
+    </div>
+  </div>
+
+  <!-- ITEM INPUT (order display + raw material used) -->
+  <div class="card">
+    <div class="grid">
+      <div class="col-4">
+        <label>Order Item</label>
+        <select id="itemName">
+          <option>Door Lamination</option>
+          <option>Frame</option>
+          <option>Repair Work</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="col-4">
+        <label>Order Size (inches) — length (display only)</label>
+        <input id="orderLength" type="number" placeholder="e.g. 81" />
+      </div>
+      <div class="col-4">
+        <label>Order Size (inches) — breadth (display only)</label>
+        <input id="orderBreadth" type="number" placeholder="e.g. 30" />
+      </div>
+
+      <!-- RAW material (THIS is used to calculate sqft) -->
+      <div class="col-4">
+        <label>Raw Material Length (inches) — USED</label>
+        <input id="rawLength" type="number" placeholder="Raw length (inch)" />
+      </div>
+      <div class="col-4">
+        <label>Raw Material Breadth (inches) — USED</label>
+        <input id="rawBreadth" type="number" placeholder="Raw breadth (inch)" />
+      </div>
+      <div class="col-4">
+        <label>Rate per Sq.ft (₹)</label>
+        <input id="ratePerSqft" type="number" placeholder="Rate" value="60" />
+      </div>
+
+      <div class="col-4">
+        <label>Small Item (screw/fevicol/other)</label>
+        <select id="smallItem">
+          <option value="">None</option>
+          <option>Screw</option>
+          <option>Fevicol</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="col-4">
+        <label>Small Item Amount (₹)</label>
+        <input id="smallAmount" type="number" value="0" />
+      </div>
+      <div class="col-4" style="display:flex;align-items:flex-end">
+        <button id="btnAddItem" style="width:100%" onclick="handleAddItem()">Add Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW / TABLE -->
+  <div class="card" id="invoiceCard">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
+        <div class="muted">Invoice preview</div>
+      </div>
+      <div class="muted" id="metaDate">Date: -</div>
+    </div>
+
+    <div style="margin-top:10px">
+      <div><strong>Customer:</strong> <span id="viewCustomer">-</span> <span id="viewMobile" class="muted"></span></div>
+
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th style="width:18%">Item</th>
+            <th style="width:18%">Order Size</th>
+            <th style="width:12%">Raw Sq.ft</th>
+            <th style="width:12%">Rate</th>
+            <th style="width:12%">Small</th>
+            <th style="width:12%">Small ₹</th>
+            <th style="width:16%" class="right">Amount</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="totals">
+        <div class="totBox">
+          <div class="totRow"><div class="muted">Subtotal</div><div id="subtotal">₹0.00</div></div>
+          <div class="totRow"><div class="muted">Small items</div><div id="totalSmall">₹0.00</div></div>
+          <div class="totRow"><div class="muted">Vehicle Rent</div><div id="totalVehicle">₹0.00</div></div>
+          <div class="totRow"><div class="muted">Previous Dues</div><div id="totalDues">₹0.00</div></div>
+          <hr>
+          <div class="totRow" style="font-weight:800;font-size:18px"><div>Total</div><div id="grandTotal">₹0.00</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn-ghost" onclick="clearInvoice()">Clear</button>
+      <button style="background:#16a34a;color:#fff" onclick="saveCurrentBill()">Save Bill</button>
+      <button onclick="downloadCurrentBillPDF()">Download Bill PDF</button>
+      <button class="btn-ghost" onclick="openSavedPanel()">Saved Bills</button>
+      <button style="background:#ff8a00;color:#fff" onclick="downloadDayReport()">Download Day's PDF</button>
+      <button class="btn-ghost" onclick="printPreview()">Print Preview</button>
+    </div>
+  </div>
+
+  <!-- small charges -->
+  <div class="card">
+    <div class="grid">
+      <div class="col-4">
+        <label>Vehicle Rent (₹)</label>
+        <input id="vehicleRent" type="number" value="0" />
+      </div>
+      <div class="col-4">
+        <label>Previous Dues (₹)</label>
+        <input id="previousDues" type="number" value="0" />
+      </div>
+      <div class="col-4">
+        <label>Notes (optional)</label>
+        <input id="notes" placeholder="Any remarks" />
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED PANEL (hidden by default) -->
+  <div id="savedPanel" class="card" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0">Saved Bills</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="filterDate" type="date" />
+        <button class="btn-ghost" onclick="filterSaved()">Filter</button>
+        <button style="background:#ff8a00;color:#fff" onclick="downloadDayReport()">Download Day PDF</button>
+        <button class="btn-ghost" onclick="clearAllBills()">Clear All</button>
+        <button class="btn-ghost" onclick="closeSavedPanel()">Close</button>
+      </div>
+    </div>
+    <div id="savedList" style="margin-top:12px"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- state keys ---------- */
+const BILLS_KEY = 'pl_bills_v1';
+const LAST_KEY = 'pl_lastBillNo';
+/* ---------- runtime state ---------- */
+let items = []; // current invoice items
+let bills = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+let lastBillNo = Number(localStorage.getItem(LAST_KEY) || 1000);
+
+/* init UI */
+document.getElementById('billDate').value = new Date().toISOString().slice(0,10);
+document.getElementById('billNumber').value = lastBillNo + 1;
+
+/* logo load */
+const logoFile = document.getElementById('logoFile');
+const logoImg = document.getElementById('logoImg');
+const logoPlaceholder = document.getElementById('logoPlaceholder');
+function loadLogoFromStorage(){
+  try{
+    const d = localStorage.getItem('pl_shopLogo');
+    if(d){ logoImg.src = d; logoImg.style.display='block'; logoPlaceholder.style.display='none'; }
+    else { logoImg.style.display='none'; logoPlaceholder.style.display='block'; }
+  }catch(e){}
+}
+logoFile.addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ localStorage.setItem('pl_shopLogo', r.result); loadLogoFromStorage(); };
+  r.readAsDataURL(f);
+});
+loadLogoFromStorage();
+
+/* helpers */
+function formatMoney(n){ return '₹' + (Number(n||0)).toFixed(2); }
+function inchesToSqft(L,B){ L = Number(L)||0; B = Number(B)||0; return Math.round(((L*B)/144)*100)/100; }
+function today(){ return new Date().toISOString().slice(0,10); }
+
+/* ---------- Add Item handler (fixed) ---------- */
+function handleAddItem(){
+  // disable button briefly to prevent double-click issues
+  const btn = document.getElementById('btnAddItem');
+  btn.disabled = true;
+  setTimeout(()=> btn.disabled = false, 600);
+
+  // call addItem and re-render
+  addItem();
+}
+
+function addItem(){
+  const itemName = document.getElementById('itemName').value.trim();
+  const orderL = document.getElementById('orderLength').value;
+  const orderB = document.getElementById('orderBreadth').value;
+  const rawL = document.getElementById('rawLength').value;
+  const rawB = document.getElementById('rawBreadth').value;
+  const rate = Number(document.getElementById('ratePerSqft').value) || 0;
+  const smallItem = document.getElementById('smallItem').value;
+  const smallAmt = Number(document.getElementById('smallAmount').value) || 0;
+
+  // Validate: raw material is required for calculation
+  if(!rawL || !rawB){
+    alert('Please enter Raw Material Length & Breadth (in inches). Raw material determines sq.ft and cost.');
+    return;
+  }
+  if(rate <= 0){
+    alert('Enter valid Rate per sq.ft.');
+    return;
+  }
+
+  const rawSqft = inchesToSqft(rawL, rawB); // THIS is the correct calculation (raw material)
+  const lamCost = Math.round((rawSqft * rate)*100)/100;
+  const amount = Math.round((lamCost + smallAmt)*100)/100;
+
+  const it = {
+    itemName,
+    orderSize: (orderL && orderB) ? `${orderL}×${orderB}` : '-',
+    rawSize: `${rawL}×${rawB}`,
+    rawSqft,
+    rate,
+    smallItem,
+    smallAmt,
+    amount
+  };
+
+  items.push(it);
+  renderInvoice();
+  // clear raw/order inputs for next entry (but keep customer)
+  document.getElementById('orderLength').value='';
+  document.getElementById('orderBreadth').value='';
+  document.getElementById('rawLength').value='';
+  document.getElementById('rawBreadth').value='';
+  document.getElementById('smallItem').value='';
+  document.getElementById('smallAmount').value = 0;
+}
+
+/* render invoice preview and totals */
+function renderInvoice(){
+  // header info
+  document.getElementById('viewCustomer').innerText = document.getElementById('customerName').value || '-';
+  document.getElementById('viewMobile').innerText = document.getElementById('customerMobile').value ? '• ' + document.getElementById('customerMobile').value : '';
+  document.getElementById('metaDate').innerText = 'Date: ' + (document.getElementById('billDate').value || today());
+
+  const tbody = document.querySelector('#itemsTable tbody');
+  tbody.innerHTML = '';
+  let subtotal = 0, smallTotal = 0;
+  items.forEach((it, idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${it.itemName}</td>
+      <td>${it.orderSize}</td>
+      <td>${it.rawSqft}</td>
+      <td>${formatMoney(it.rate)}</td>
+      <td>${it.smallItem || '-'}</td>
+      <td>${formatMoney(it.smallAmt)}</td>
+      <td class="right">${formatMoney(it.amount)}</td>`;
+    tbody.appendChild(tr);
+    subtotal += Number(it.amount);
+    smallTotal += Number(it.smallAmt || 0);
+  });
+
+  const vehicle = Number(document.getElementById('vehicleRent').value) || 0;
+  const dues = Number(document.getElementById('previousDues').value) || 0;
+  document.getElementById('subtotal').innerText = formatMoney(subtotal);
+  document.getElementById('totalSmall').innerText = formatMoney(smallTotal);
+  document.getElementById('totalVehicle').innerText = formatMoney(vehicle);
+  document.getElementById('totalDues').innerText = formatMoney(dues);
+  const grand = Math.round((subtotal + vehicle + dues) * 100)/100;
+  document.getElementById('grandTotal').innerText = formatMoney(grand);
+
+  // bill number
+  document.getElementById('billNumber').value = Number(localStorage.getItem(LAST_KEY) || lastBillNo) + 1;
+}
+
+/* clear invoice (current only) */
+function clearInvoice(){
+  if(!confirm('Clear current invoice items?')) return;
+  items = [];
+  renderInvoice();
+  // keep customer info
+}
+
+/* save current bill permanently */
+function saveCurrentBill(){
+  if(items.length === 0){ alert('Add at least one item before saving'); return; }
+  const customer = document.getElementById('customerName').value || '-';
+  const mobile = document.getElementById('customerMobile').value || '';
+  const date = document.getElementById('billDate').value || today();
+  const notes = document.getElementById('notes').value || '';
+  const vehicle = Number(document.getElementById('vehicleRent').value) || 0;
+  const dues = Number(document.getElementById('previousDues').value) || 0;
+  const subtotal = Number(document.getElementById('subtotal').innerText.replace('₹','')) || 0;
+  const small = Number(document.getElementById('totalSmall').innerText.replace('₹','')) || 0;
+
+  lastBillNo = Number(localStorage.getItem(LAST_KEY) || lastBillNo) + 1;
+  localStorage.setItem(LAST_KEY, lastBillNo);
+
+  const bill = {
+    id: 'bill_' + Date.now(),
+    billNo: lastBillNo,
+    customer, mobile, date, notes,
+    items: JSON.parse(JSON.stringify(items)),
+    subtotal, small, vehicle, dues
+  };
+
+  bills = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+  bills.push(bill);
+  localStorage.setItem(BILLS_KEY, JSON.stringify(bills));
+  alert('Saved Bill No. ' + lastBillNo);
+  // clear current items only
+  items = [];
+  renderInvoice();
+  // refresh saved list if panel open
+  if(document.getElementById('savedPanel').style.display !== 'none') refreshSavedList();
+}
+
+/* saved panel functions */
+function openSavedPanel(){ document.getElementById('savedPanel').style.display='block'; refreshSavedList(); }
+function closeSavedPanel(){ document.getElementById('savedPanel').style.display='none'; }
+function refreshSavedList(filterDate){
+  const list = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+  const filtered = filterDate ? list.filter(b => b.date === filterDate) : list;
+  const container = document.getElementById('savedList');
+  container.innerHTML = '';
+  if(filtered.length === 0){ container.innerHTML = '<div class="muted">No saved bills</div>'; return; }
+  filtered.slice().reverse().forEach(b => {
+    const div = document.createElement('div');
+    div.style.borderBottom = '1px solid #f1f5f9';
+    div.style.padding = '10px 0';
+    const total = (b.subtotal + b.vehicle + b.dues);
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Bill ${b.billNo}</strong> • ${b.customer} <div class="muted">${b.date} • ${b.notes||''}</div></div>
+      <div style="text-align:right">
+        <div style="font-weight:700;margin-bottom:6px">${formatMoney(total)}</div>
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn-ghost" onclick='downloadSavedBill("${b.id}")'>Download</button>
+          <button class="btn-ghost" onclick='deleteSavedBill("${b.id}")'>Delete</button>
+        </div>
+      </div>
+    </div>`;
+    container.appendChild(div);
+  });
+}
+function filterSaved(){
+  const d = document.getElementById('filterDate').value;
+  if(!d) return refreshSavedList();
+  refreshSavedList(d);
+}
+function clearAllBills(){
+  if(!confirm('Delete ALL saved bills? This cannot be undone')) return;
+  localStorage.removeItem(BILLS_KEY);
+  refreshSavedList();
+}
+function deleteSavedBill(id){
+  if(!confirm('Delete this bill?')) return;
+  let arr = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+  arr = arr.filter(x => x.id !== id);
+  localStorage.setItem(BILLS_KEY, JSON.stringify(arr));
+  refreshSavedList();
+}
+
+/* ---------- PDF generation ---------- */
+async function elementToImageHTML(html){
+  // render HTML string to a temporary element, capture via html2canvas, return image data URL
+  const tmp = document.createElement('div');
+  tmp.style.position = 'fixed';
+  tmp.style.left = '-9999px';
+  tmp.innerHTML = html;
+  document.body.appendChild(tmp);
+  const canvas = await html2canvas(tmp, { scale: 2, useCORS:true });
+  const dataUrl = canvas.toDataURL('image/png');
+  document.body.removeChild(tmp);
+  return dataUrl;
+}
+
+function buildInvoiceHTML(b){
+  const logo = localStorage.getItem('pl_shopLogo') || null;
+  const logoHtml = logo ? `<img src="${logo}" style="height:60px;object-fit:contain">` : `<div style="font-size:14px;color:#666">PSG</div>`;
+  let rows = '';
+  b.items.forEach(it=>{
+    rows += `<tr>
+      <td style="border:1px solid #eee;padding:6px">${it.itemName}</td>
+      <td style="border:1px solid #eee;padding:6px">${it.orderSize}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:center">${it.rawSqft}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.rate}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.smallAmt}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.amount.toFixed(2)}</td>
+    </tr>`;
+  });
+
+  const tot = (b.subtotal + b.vehicle + b.dues).toFixed(2);
+
+  return `<div style="font-family:Arial;padding:14px;max-width:780px;">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
+      <div>${logoHtml}</div>
+    </div>
+    <div style="margin-top:8px"><strong>Bill No:</strong> ${b.billNo} <span style="float:right">${b.date}</span></div>
+    <div style="margin-top:6px"><strong>Customer:</strong> ${b.customer} ${b.mobile?(' • ' + b.mobile):''}</div>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;">
+      <thead>
+        <tr><th style="border:1px solid #eee;padding:6px">Item</th><th style="border:1px solid #eee;padding:6px">Order</th><th style="border:1px solid #eee;padding:6px">Raw Sqft</th><th style="border:1px solid #eee;padding:6px">Rate</th><th style="border:1px solid #eee;padding:6px">Small</th><th style="border:1px solid #eee;padding:6px">Amount</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;width:100%">
+      <div style="width:320px">
+        <div style="display:flex;justify-content:space-between"><div>Subtotal</div><div>₹${b.subtotal.toFixed(2)}</div></div>
+        <div style="display:flex;justify-content:space-between"><div>Small items</div><div>₹${b.small.toFixed(2)}</div></div>
+        <div style="display:flex;justify-content:space-between"><div>Vehicle</div><div>₹${b.vehicle.toFixed(2)}</div></div>
+        <div style="display:flex;justify-content:space-between"><div>Dues</div><div>₹${b.dues.toFixed(2)}</div></div>
+        <hr>
+        <div style="display:flex;justify-content:space-between;font-weight:700"><div>Total</div><div>₹${tot}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function downloadSavedBill(id){
+  const arr = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+  const b = arr.find(x=>x.id===id);
+  if(!b){ alert('Bill not found'); return; }
+  await downloadBillHTML(b);
+}
+async function downloadBillHTML(b){
+  const img = await elementToImageHTML(buildInvoiceHTML(b));
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const props = pdf.getImageProperties(img);
+  const w = pdf.internal.pageSize.getWidth();
+  const h = (props.height * w) / props.width;
+  pdf.addImage(img,'PNG',0,0,w,h);
+  pdf.save(`Bill_${b.billNo}_${b.date}.pdf`);
+}
+async function downloadSavedBill(id){ await downloadSavedBill(id); } // legacy
+
+/* exposed wrapper */
+async function downloadSavedBillWrapper(id){ await downloadBillHTML(JSON.parse(localStorage.getItem(BILLS_KEY)||'[]').find(x=>x.id===id));}
+
+/* wrapper used in UI */
+async function downloadSavedBillUI(id){ const arr = JSON.parse(localStorage.getItem(BILLS_KEY)||'[]'); const b = arr.find(x=>x.id===id); if(b) await downloadBillHTML(b); }
+
+/* overloaded name used above in saved list buttons */
+window.downloadSavedBill = downloadSavedBillUI;
+
+/* delete wrapper used above */
+window.deleteSavedBill = deleteSavedBill;
+
+/* download current invoice (unsaved) */
+async function downloadCurrentBillPDF(){
+  if(items.length === 0){ alert('Add items first'); return; }
+  const bill = {
+    billNo: 'TEMP',
+    customer: document.getElementById('customerName').value || '-',
+    mobile: document.getElementById('customerMobile').value || '',
+    date: document.getElementById('billDate').value || today(),
+    items: items,
+    subtotal: Number(document.getElementById('subtotal').innerText.replace('₹','')) || 0,
+    small: Number(document.getElementById('totalSmall').innerText.replace('₹','')) || 0,
+    vehicle: Number(document.getElementById('vehicleRent').value) || 0,
+    dues: Number(document.getElementById('previousDues').value) || 0
+  };
+  await downloadBillHTML(bill);
+}
+window.downloadCurrentBillPDF = downloadCurrentBillPDF;
+
+/* 'Download Day's PDF' — each bill page + summary */
+async function downloadDayReport(){
+  const day = document.getElementById('filterDate').value || document.getElementById('billDate').value || today();
+  const arr = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]').filter(x=>x.date === day);
+  if(arr.length === 0){ alert('No bills for ' + day); return; }
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  let totalAmt=0, totalSmall=0, totalVehicle=0, totalDues=0;
+
+  for(let i=0;i<arr.length;i++){
+    const b = arr[i];
+    const img = await elementToImageHTML(buildInvoiceHTML(b));
+    const props = pdf.getImageProperties(img);
+    const w = pdf.internal.pageSize.getWidth();
+    const h = (props.height * w) / props.width;
+    if(i>0) pdf.addPage();
+    pdf.addImage(img,'PNG',0,0,w,h);
+
+    totalAmt += b.subtotal;
+    totalSmall += b.small;
+    totalVehicle += b.vehicle;
+    totalDues += b.dues;
+  }
+
+  // summary page
+  pdf.addPage();
+  pdf.setFontSize(18);
+  pdf.text(`Daily Summary - ${day}`, 14, 36);
+  pdf.setFontSize(12);
+  pdf.text(`Total Bills: ${arr.length}`, 14, 62);
+  pdf.text(`Total Amount (without small/veh/dues): ₹${totalAmt.toFixed(2)}`, 14, 82);
+  pdf.text(`Total Small items: ₹${totalSmall.toFixed(2)}`, 14, 102);
+  pdf.text(`Total Vehicle: ₹${totalVehicle.toFixed(2)}`, 14, 122);
+  pdf.text(`Total Dues: ₹${totalDues.toFixed(2)}`, 14, 142);
+  const grand = totalAmt + totalSmall + totalVehicle + totalDues;
+  pdf.text(`Grand Total: ₹${grand.toFixed(2)}`, 14, 168);
+
+  pdf.save(`Daily_Report_${day}.pdf`);
+}
+
+/* print preview function */
+function printPreview(){
+  const html = buildInvoiceHTML({
+    billNo: 'PREVIEW',
+    customer: document.getElementById('customerName').value || '-',
+    mobile: document.getElementById('customerMobile').value || '',
+    date: document.getElementById('billDate').value || today(),
+    items,
+    subtotal: Number(document.getElementById('subtotal').innerText.replace('₹','')) || 0,
+    small: Number(document.getElementById('totalSmall').innerText.replace('₹','')) || 0,
+    vehicle: Number(document.getElementById('vehicleRent').value) || 0,
+    dues: Number(document.getElementById('previousDues').value) || 0
+  });
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=> w.print(), 400);
+}
+
+/* on load: render existing if any */
+function refreshSavedList(){
+  refreshSavedList(); // intentionally calls itself? Avoid conflict by redefining below
+}
+/* fix naming conflict: create safe refresh function below */
+function refreshSavedList(forceDate){
+  const arr = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+  const container = document.getElementById('savedList');
+  container.innerHTML = '';
+  const list = forceDate ? arr.filter(x=>x.date===forceDate) : arr;
+  if(list.length === 0){ container.innerHTML = '<div class="muted">No saved bills</div>'; return; }
+  list.slice().reverse().forEach(b=>{
+    const div = document.createElement('div');
+    div.style.borderBottom='1px solid #eee';
+    div.style.padding='8px 0';
+    const total = (b.subtotal + b.vehicle + b.dues);
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Bill ${b.billNo}</strong> • ${b.customer} <div class="muted">${b.date}</div></div>
+      <div style="text-align:right">
+        <div style="font-weight:700">${formatMoney(total)}</div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
+          <button class="btn-ghost" onclick='downloadSavedBill("${b.id}")'>Download</button>
+          <button class="btn-ghost" onclick='deleteSavedBill("${b.id}")'>Delete</button>
+        </div>
+      </div>
+    </div>`;
+    container.appendChild(div);
+  });
+}
+
+/* small safety: ensure renderInvoice on load and refresh saved list */
+window.addEventListener('load', ()=>{
+  loadLogoFromStorage();
+  renderInvoice();
+  // ensure saved list shows up if open
+  if(document.getElementById('savedPanel').style.display !== 'none') refreshSavedList();
+});
+
+</script>
+</body>
+</html>
 <!-- Final Door Lamination Billing System - Bug‑Free Version --><!-- Includes: Permanent Saved Bills, Add Item Fix, Raw Material Sqft Only, No GST, Vehicle Rent, Due, Small Items --><!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8" />
