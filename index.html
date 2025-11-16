@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PSG 3D DOOR & PLY — Billing (Premium)</title>
+<title>PSG Door & Lamination — Billing (Premium)</title>
 
 <!-- Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -65,7 +65,7 @@
         <div id="logoPlaceholder" class="muted">Upload Logo</div>
       </div>
       <div>
-        <h1>PSG 3D DOOR & PLY</h1>
+        <h1>PSG DOOR AND LAMINATION</h1>
         <div class="tag">Premium billing • Save bills • PDF export</div>
       </div>
     </div>
@@ -157,7 +157,7 @@
   <div class="card" id="invoiceCard">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-weight:800;font-size:18px">PSG 3D DOOR & PLY</div>
+        <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
         <div class="muted">Invoice preview</div>
       </div>
       <div class="muted" id="metaDate">Date: -</div>
@@ -477,14 +477,13 @@ function buildInvoiceHTML(b){
   let rows = '';
   b.items.forEach(it=>{
     rows += `<tr>
-  <th style="border:1px solid #eee;padding:6px">Item</th>
-  <th style="border:1px solid #eee;padding:6px">Order</th>
-  <th style="border:1px solid #eee;padding:6px">Raw Sq.ft</th>
-  <th style="border:1px solid #eee;padding:6px">Rate</th>
-  <th style="border:1px solid #eee;padding:6px">Small</th>
-  <th style="border:1px solid #eee;padding:6px">Amount</th>
-</tr>
-
+      <td style="border:1px solid #eee;padding:6px">${it.itemName}</td>
+      <td style="border:1px solid #eee;padding:6px">${it.orderSize}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:center">${it.rawSqft}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.rate}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.smallAmt}</td>
+      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.amount.toFixed(2)}</td>
+    </tr>`;
   });
 
   const tot = (b.subtotal + b.vehicle + b.dues).toFixed(2);
