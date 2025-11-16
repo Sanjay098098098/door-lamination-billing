@@ -48,7 +48,7 @@ function renderTable(){ billTable.innerHTML="<tr><th>Item</th><th>Order Size</th
  grandDisplay.innerText = "Grand Total: "+GT.toFixed(2);
 }function saveBill(){ let bill={ date:new Date().toLocaleDateString(), items, vehicle:vehicle.value||0, due:due.value||0 }; savedBills.push(bill); localStorage.setItem('psg_saved_bills', JSON.stringify(savedBills)); alert('Bill Saved Permanent'); }
 
-function downloadPDF(){alert('PDF next update');} </script>
-
+function downloadPDF(){alert('PDF next update');}
+</script>
 </body>
 </html>
