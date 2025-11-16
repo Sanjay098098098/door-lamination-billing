@@ -477,13 +477,14 @@ function buildInvoiceHTML(b){
   let rows = '';
   b.items.forEach(it=>{
     rows += `<tr>
-      <td style="border:1px solid #eee;padding:6px">${it.itemName}</td>
-      <td style="border:1px solid #eee;padding:6px">${it.orderSize}</td>
-      <td style="border:1px solid #eee;padding:6px;text-align:center">${it.rawSqft}</td>
-      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.rate}</td>
-      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.smallAmt}</td>
-      <td style="border:1px solid #eee;padding:6px;text-align:right">₹${it.amount.toFixed(2)}</td>
-    </tr>`;
+  <th style="border:1px solid #eee;padding:6px">Item</th>
+  <th style="border:1px solid #eee;padding:6px">Order</th>
+  <th style="border:1px solid #eee;padding:6px">Raw Sq.ft</th>
+  <th style="border:1px solid #eee;padding:6px">Rate</th>
+  <th style="border:1px solid #eee;padding:6px">Small</th>
+  <th style="border:1px solid #eee;padding:6px">Amount</th>
+</tr>
+
   });
 
   const tot = (b.subtotal + b.vehicle + b.dues).toFixed(2);
