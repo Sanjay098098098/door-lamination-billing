@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PSG Door & Lamination — Billing (Premium)</title>
+<title>PSG 3D DOOR & PLY — Billing (Premium)</title>
 
 <!-- Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -65,7 +65,7 @@
         <div id="logoPlaceholder" class="muted">Upload Logo</div>
       </div>
       <div>
-        <h1>PSG DOOR AND LAMINATION</h1>
+        <h1>PSG 3D DOOR & PLY</h1>
         <div class="tag">Premium billing • Save bills • PDF export</div>
       </div>
     </div>
@@ -157,7 +157,7 @@
   <div class="card" id="invoiceCard">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-weight:800;font-size:18px">PSG DOOR AND LAMINATION</div>
+        <div style="font-weight:800;font-size:18px">PSG 3D DOOR & PLY</div>
         <div class="muted">Invoice preview</div>
       </div>
       <div class="muted" id="metaDate">Date: -</div>
@@ -662,152 +662,4 @@ window.addEventListener('load', ()=>{
 
 </script>
 </body>
-</html>
-<!-- Final Door Lamination Billing System - Bug‑Free Version --><!-- Includes: Permanent Saved Bills, Add Item Fix, Raw Material Sqft Only, No GST, Vehicle Rent, Due, Small Items --><!DOCTYPE html><html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Door Lamination Billing</title>
-<style>
- body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
- h2 { margin-top: 30px; }
- .card { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 5px #aaa; }
- input, select { width: 100%; padding: 8px; margin: 5px 0 10px; border-radius: 5px; border: 1px solid #ccc; }
- button { padding: 10px 15px; border: none; border-radius: 6px; background: #007bff; color: white; margin-right: 10px; cursor: pointer; }
- button:disabled { background: #888; }
- table { width: 100%; border-collapse: collapse; margin-top: 15px; }
- th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
- .bill-box { background: #fff; padding: 10px; border-radius: 8px; margin-top: 20px; box-shadow: 0 0 5px #ccc; }
-</style>
-</head>
-<body>
-<h1>Door Lamination Billing - Final Version</h1><div class="card">
- <h2>Customer Details</h2>
- <input id="custName" placeholder="Customer Name" />
- <input id="custMobile" placeholder="Mobile Number" />
- <input id="custAddress" placeholder="Address" />
-</div><div class="card">
- <h2>Order Details</h2>
- <label>Order Item (Option A):</label>
- <select id="orderItem">
-   <option value="Door Lamination">Door Lamination</option>
-   <option value="Frame">Frame</option>
-   <option value="Repair Work">Repair Work</option>
- </select><label>Order Size (Inch):</label> <input id="orderLength" type="number" placeholder="Length (inch)" /> <input id="orderWidth" type="number" placeholder="Width (inch)" /> <input id="orderRate" type="number" placeholder="Rate per sqft" />
-
- <h3>Raw Material Size (Only This Will Calculate Sqft)</h3>
- <input id="rawLength" type="number" placeholder="Raw Length (inch)" />
- <input id="rawWidth" type="number" placeholder="Raw Width (inch)" /><button onclick="addItem()">Add Item</button>
-
-</div><h2>Items Added</h2>
-<div id="itemsList" class="bill-box"></div><div class="card">
- <h2>Other Charges</h2>
- <input id="vehicleRent" type="number" placeholder="Vehicle Rent" />
- <input id="smallItems" type="number" placeholder="Small Items (Screw, Fevicol, etc.)" />
- <input id="dueAmount" type="number" placeholder="Due Amount" />
-</div><div class="card">
- <button onclick="saveBill()">Save Bill</button>
- <button onclick="downloadPDF()">Download PDF</button>
- <button onclick="resetForm()">Reset Form</button>
-</div><h2>Saved Bills (Permanent)</h2>
-<div id="savedBills" class="bill-box"></div><script>
-let items = [];
-
-function addItem() {
- const orderItem = document.getElementById("orderItem").value;
- const oL = Number(document.getElementById("orderLength").value);
- const oW = Number(document.getElementById("orderWidth").value);
- const rate = Number(document.getElementById("orderRate").value);
-
- const rL = Number(document.getElementById("rawLength").value);
- const rW = Number(document.getElementById("rawWidth").value);
-
- if (!oL || !oW || !rL || !rW || !rate) {
-   alert("Please fill all required fields");
-   return;
- }
-
- const rawSqft = ((rL * rW) / 144).toFixed(2);
- const amount = (rawSqft * rate).toFixed(2);
-
- items.push({ orderItem, oL, oW, rL, rW, rawSqft, rate, amount });
- renderItems();
-}
-
-function renderItems() {
- let html = `<table><tr><th>Item</th><th>Raw Size</th><th>Sqft</th><th>Rate</th><th>Amount</th></tr>`;
- items.forEach(i => {
-   html += `<tr>
-     <td>${i.orderItem}</td>
-     <td>${i.rL} x ${i.rW}</td>
-     <td>${i.rawSqft}</td>
-     <td>${i.rate}</td>
-     <td>${i.amount}</td>
-   </tr>`;
- });
- html += `</table>`;
- document.getElementById("itemsList").innerHTML = html;
-}
-
-function saveBill() {
- const bill = {
-   name: custName.value,
-   mobile: custMobile.value,
-   address: custAddress.value,
-   items,
-   vehicleRent: vehicleRent.value,
-   smallItems: smallItems.value,
-   due: dueAmount.value,
-   date: new Date().toLocaleString()
- };
-
- let all = JSON.parse(localStorage.getItem("allBills") || "[]");
- all.push(bill);
- localStorage.setItem("allBills", JSON.stringify(all));
- alert("Bill Saved Permanently ✔");
- loadSavedBills();
-}
-
-function loadSavedBills() {
- let all = JSON.parse(localStorage.getItem("allBills") || "[]");
- let html = "";
- all.forEach((b, i) => {
-   let itemsHTML = b.items.map(it => `${it.orderItem} — Raw: ${it.rL} x ${it.rW} inch, Sqft: ${it.rawSqft}, Amt: ${it.amount}`).join('<br>');
-   html += `<div><b>Bill ${i+1}</b> - ${b.date}<br>${b.name}, ${b.mobile}<br>${itemsHTML}<br>
-   <button onclick="editBill(${i})">Edit</button></div><hr>`;
- });
- document.getElementById("savedBills").innerHTML = html;
-}
-
-function editBill(index){
- let all = JSON.parse(localStorage.getItem("allBills") || "[]");
- let b = all[index];
- custName.value = b.name;
- custMobile.value = b.mobile;
- custAddress.value = b.address;
- vehicleRent.value = b.vehicleRent;
- smallItems.value = b.smallItems;
- dueAmount.value = b.due;
- items = b.items;
- renderItems();
-}.innerHTML = html;
-}
-
-loadSavedBills();
-
-function resetForm() {
- items = [];
- renderItems();
- custName.value = "";
- custMobile.value = "";
- custAddress.value = "";
- vehicleRent.value = "";
- smallItems.value = "";
- dueAmount.value = "";
-}
-
-function downloadPDF() {
- alert("PDF Feature Will Be Added (Ready for Integration)");
-}
-</script></body>
 </html>
